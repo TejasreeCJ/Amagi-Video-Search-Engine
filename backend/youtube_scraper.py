@@ -5,6 +5,8 @@ import yt_dlp
 import json
 from typing import List, Dict, Optional
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import partial
 
 
 class YouTubeScraper:
@@ -121,6 +123,13 @@ class YouTubeScraper:
                 description = info.get('description', '')
                 duration = info.get('duration', 0)
                 
+                # Extract additional metadata for boosting
+                view_count = info.get('view_count', 0) or 0
+                channel = info.get('channel', '') or info.get('uploader', '') or ''
+                channel_id = info.get('channel_id', '') or ''
+                thumbnail = info.get('thumbnail', '') or f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+                like_count = info.get('like_count', 0) or 0
+                
                 # Try to get automatic captions first, then manual subtitles
                 subtitles = info.get('automatic_captions', {})
                 if not subtitles or 'en' not in subtitles:
@@ -143,6 +152,11 @@ class YouTubeScraper:
                             'description': description,
                             'duration': duration,
                             'url': video_url,
+                            'view_count': view_count,
+                            'channel': channel,
+                            'channel_id': channel_id,
+                            'thumbnail': thumbnail,
+                            'like_count': like_count,
                             'transcript': [],
                         }
                 
@@ -185,6 +199,11 @@ class YouTubeScraper:
                     'description': description,
                     'duration': duration,
                     'url': video_url,
+                    'view_count': view_count,
+                    'channel': channel,
+                    'channel_id': channel_id,
+                    'thumbnail': thumbnail,
+                    'like_count': like_count,
                     'transcript': transcript_segments,
                 }
         except Exception as e:
@@ -243,9 +262,10 @@ class YouTubeScraper:
         """Convert VTT timestamp to seconds"""
         return int(hours) * 3600 + int(minutes) * 60 + int(seconds) + int(milliseconds) / 1000.0
 
-    def get_playlist_with_transcripts(self, playlist_url: str) -> List[Dict]:
+    def get_playlist_with_transcripts(self, playlist_url: str, max_workers: int = 5) -> List[Dict]:
         """
         Get all videos from playlist with their transcripts
+        Uses parallel processing to speed up transcript extraction
         """
         videos = self.get_playlist_videos(playlist_url)
         
@@ -256,20 +276,32 @@ class YouTubeScraper:
                           "3. The playlist contains videos\n"
                           "4. You have internet connection")
         
-        print(f"\nProcessing {len(videos)} videos for transcripts...")
+        print(f"\nProcessing {len(videos)} videos for transcripts (using {max_workers} parallel workers)...")
         videos_with_transcripts = []
         
-        for i, video in enumerate(videos, 1):
-            print(f"\n[{i}/{len(videos)}] Processing: {video['title']}")
-            video_data = self.get_video_transcript(video['url'])
-            if video_data:
-                if video_data['transcript']:
-                    print(f"  ✓ Transcript found: {len(video_data['transcript'])} segments")
-                    videos_with_transcripts.append(video_data)
-                else:
-                    print(f"  ✗ No transcript available for this video")
-            else:
-                print(f"  ✗ Failed to extract video data")
+        # Process videos in parallel
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all tasks
+            future_to_video = {
+                executor.submit(self.get_video_transcript, video['url']): (i, video)
+                for i, video in enumerate(videos, 1)
+            }
+            
+            # Process completed tasks as they finish
+            for future in as_completed(future_to_video):
+                i, video = future_to_video[future]
+                try:
+                    video_data = future.result()
+                    if video_data:
+                        if video_data['transcript']:
+                            print(f"[{i}/{len(videos)}] ✓ {video['title']}: {len(video_data['transcript'])} segments")
+                            videos_with_transcripts.append(video_data)
+                        else:
+                            print(f"[{i}/{len(videos)}] ✗ {video['title']}: No transcript available")
+                    else:
+                        print(f"[{i}/{len(videos)}] ✗ {video['title']}: Failed to extract video data")
+                except Exception as e:
+                    print(f"[{i}/{len(videos)}] ✗ {video['title']}: Error - {str(e)}")
         
         print(f"\nSuccessfully processed {len(videos_with_transcripts)}/{len(videos)} videos with transcripts")
         return videos_with_transcripts

@@ -104,35 +104,77 @@ function displayResults(clips, query) {
         return;
     }
     
-    resultsContainer.innerHTML = clips.map((clip, index) => `
+    resultsContainer.innerHTML = clips.map((clip, index) => {
+        // Calculate clip percentage
+        const clipPercentage = clip.video_duration > 0 
+            ? ((clip.clip_end - clip.clip_start) / clip.video_duration * 100).toFixed(1)
+            : '0';
+        
+        // Get thumbnail URL (fallback to default YouTube thumbnail)
+        const thumbnail = clip.thumbnail || `https://img.youtube.com/vi/${clip.video_id}/maxresdefault.jpg`;
+        
+        // Format view count
+        const viewCount = clip.view_count > 0 ? formatViewCount(clip.view_count) : '';
+        
+        // Format channel name
+        const channel = clip.channel || 'Unknown Channel';
+        
+        return `
         <div class="result-card" onclick="openVideoModal(${index})" data-clip-index="${index}">
-            <h3>${clip.video_title}</h3>
-            <div class="video-meta">
-                Video ID: ${clip.video_id}
-            </div>
-            <div class="clip-info">
-                <div class="clip-time">
-                    Clip: ${formatTime(clip.clip_start)} - ${formatTime(clip.clip_end)}
+            <div class="result-card-content">
+                <div class="thumbnail-container">
+                    <img src="${thumbnail}" alt="${clip.video_title}" class="thumbnail" 
+                         onerror="this.src='https://img.youtube.com/vi/${clip.video_id}/hqdefault.jpg'">
+                    <div class="clip-duration-badge">${formatTime(clip.clip_end - clip.clip_start)}</div>
+                    <div class="clip-percentage-badge">${clipPercentage}% of video</div>
                 </div>
-                <div class="clip-text">
-                    ${clip.transcript.substring(0, 200)}${clip.transcript.length > 200 ? '...' : ''}
-                </div>
-                <div class="relevance-score">
-                    Relevance: ${(clip.relevance_score * 100).toFixed(1)}%
+                <div class="result-info">
+                    <h3 class="video-title">${clip.video_title}</h3>
+                    <div class="video-meta-info">
+                        <span class="channel-name">${channel}</span>
+                        ${viewCount ? `<span class="view-count">${viewCount} views</span>` : ''}
+                    </div>
+                    <div class="clip-time-info">
+                        <span class="clip-timestamp">${formatTime(clip.clip_start)} - ${formatTime(clip.clip_end)}</span>
+                        <span class="clip-percentage">(${clipPercentage}% of video)</span>
+                    </div>
+                    <div class="clip-text">
+                        ${clip.transcript.substring(0, 150)}${clip.transcript.length > 150 ? '...' : ''}
+                    </div>
+                    <div class="relevance-score">
+                        <span class="score-label">Relevance:</span>
+                        <span class="score-value">${(clip.relevance_score * 100).toFixed(1)}%</span>
+                    </div>
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
     
     // Store clips data
     window.searchResults = clips;
 }
 
-// Format time in seconds to MM:SS format
+// Format time in seconds to MM:SS or HH:MM:SS format
 function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
+    
+    if (hours > 0) {
+        return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Format view count (e.g., 1000 -> "1K", 1000000 -> "1M")
+function formatViewCount(count) {
+    if (count >= 1000000) {
+        return (count / 1000000).toFixed(1) + 'M';
+    } else if (count >= 1000) {
+        return (count / 1000).toFixed(1) + 'K';
+    }
+    return count.toString();
 }
 
 // Open video modal

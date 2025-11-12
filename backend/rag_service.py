@@ -1,31 +1,23 @@
 """
 RAG service for query processing and retrieval
+Now uses hybrid search (BM25 + semantic) for better results
 """
-from backend.embedding_service import EmbeddingService
-from backend.pinecone_service import PineconeService
+from backend.hybrid_search_service import HybridSearchService
 from typing import List, Dict
-import numpy as np
 
 
 class RAGService:
     def __init__(self):
-        self.embedding_service = EmbeddingService()
-        self.pinecone_service = PineconeService()
+        self.hybrid_search = HybridSearchService()
 
     def search_video_clips(self, query: str, top_k: int = 5) -> List[Dict]:
         """
-        Search for video clips matching the query using RAG
+        Search for video clips matching the query using hybrid search (BM25 + semantic)
         """
-        # Create embedding for query
-        query_embedding = self.embedding_service.create_embeddings([query])[0]
+        # Use hybrid search for better retrieval
+        results = self.hybrid_search.search(query, top_k=top_k)
         
-        # Search in Pinecone
-        results = self.pinecone_service.search(
-            query_embedding=query_embedding.tolist(),
-            top_k=top_k
-        )
-        
-        # Format results with clip information
+        # Format results with clip information (including new metadata)
         clips = []
         for result in results:
             clips.append({
@@ -36,6 +28,13 @@ class RAGService:
                 'clip_end': result['end'],
                 'transcript': result['text'],
                 'relevance_score': result['score'],
+                'video_description': result.get('video_description', ''),
+                'video_duration': result.get('video_duration', 0),
+                'view_count': result.get('view_count', 0),
+                'channel': result.get('channel', ''),
+                'channel_id': result.get('channel_id', ''),
+                'thumbnail': result.get('thumbnail', ''),
+                'like_count': result.get('like_count', 0),
             })
         
         return clips

@@ -12,6 +12,9 @@ from backend.youtube_scraper import YouTubeScraper
 from backend.embedding_service import EmbeddingService
 from backend.pinecone_service import PineconeService
 from backend.rag_service import RAGService
+from backend.bm25_service import BM25Service
+from backend.config import MAX_WORKERS
+import uuid
 
 app = FastAPI(title="NPTEL Video Search Engine")
 
@@ -91,9 +94,9 @@ async def process_playlist(request: PlaylistRequest):
         emb_service = get_embedding_service()
         pc_service = get_pinecone_service()
         
-        # Get videos with transcripts
+        # Get videos with transcripts (using parallel processing)
         try:
-            videos = scraper.get_playlist_with_transcripts(request.playlist_url)
+            videos = scraper.get_playlist_with_transcripts(request.playlist_url, max_workers=MAX_WORKERS)
         except Exception as e:
             error_msg = str(e)
             raise HTTPException(
@@ -140,11 +143,13 @@ async def process_playlist(request: PlaylistRequest):
                            "3. The playlist URL is correct"
                 )
         
-        # Process each video
+        # Process each video and create chunks
+        print(f"\nPreparing transcript chunks...")
         all_chunks = []
-        for video in videos:
+        for i, video in enumerate(videos, 1):
             chunks = emb_service.prepare_transcript_for_embedding(video)
             all_chunks.extend(chunks)
+            print(f"  Video {i}/{len(videos)}: {len(chunks)} chunks created")
         
         if not all_chunks:
             raise HTTPException(
@@ -152,12 +157,24 @@ async def process_playlist(request: PlaylistRequest):
                 detail="No transcript chunks created. Videos might not have sufficient transcript data."
             )
         
-        # Create embeddings
+        print(f"\nTotal chunks created: {len(all_chunks)}")
+        
+        # Generate consistent chunk IDs for both Pinecone and BM25
+        chunk_ids = [str(uuid.uuid4()) for _ in all_chunks]
+        
+        # Build BM25 index (optimized - done in parallel with embedding generation)
+        print(f"\nBuilding BM25 index for hybrid search...")
+        bm25_service = BM25Service()
+        bm25_service.build_index(all_chunks, chunk_ids)
+        
+        # Create embeddings in batches (already optimized in embedding_service)
+        print(f"\nCreating embeddings...")
         texts = [chunk['text'] for chunk in all_chunks]
         embeddings = emb_service.create_embeddings(texts)
         
-        # Store in Pinecone
-        pc_service.upsert_embeddings(all_chunks, embeddings.tolist())
+        # Store in Pinecone with consistent chunk IDs (already batched in pinecone_service)
+        print(f"\nStoring embeddings in Pinecone...")
+        pc_service.upsert_embeddings(all_chunks, embeddings.tolist(), chunk_ids=chunk_ids)
         
         return {
             "message": "Playlist processed successfully",

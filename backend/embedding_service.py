@@ -2,7 +2,7 @@
 Service for creating vector embeddings from transcripts
 """
 from sentence_transformers import SentenceTransformer
-from backend.config import EMBEDDING_MODEL, CHUNK_SIZE, CHUNK_OVERLAP
+from backend.config import EMBEDDING_MODEL, CHUNK_SIZE, CHUNK_OVERLAP, EMBEDDING_BATCH_SIZE
 from typing import List, Dict
 import numpy as np
 
@@ -78,12 +78,28 @@ class EmbeddingService:
         
         return chunks
 
-    def create_embeddings(self, texts: List[str]) -> np.ndarray:
+    def create_embeddings(self, texts: List[str], batch_size: int = None) -> np.ndarray:
         """
         Create embeddings for a list of texts
+        Processes in batches to optimize memory usage and speed
         """
-        embeddings = self.model.encode(texts, show_progress_bar=True)
-        return embeddings
+        if not texts:
+            return np.array([])
+        
+        if batch_size is None:
+            batch_size = EMBEDDING_BATCH_SIZE
+        
+        all_embeddings = []
+        total_batches = (len(texts) + batch_size - 1) // batch_size
+        
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            batch_num = i // batch_size + 1
+            print(f"  Creating embeddings: batch {batch_num}/{total_batches} ({len(batch)} texts)")
+            batch_embeddings = self.model.encode(batch, show_progress_bar=False, convert_to_numpy=True)
+            all_embeddings.append(batch_embeddings)
+        
+        return np.vstack(all_embeddings)
 
     def prepare_transcript_for_embedding(self, video_data: Dict) -> List[Dict]:
         """
@@ -96,6 +112,13 @@ class EmbeddingService:
                 'video_id': video_data['video_id'],
                 'video_title': video_data['title'],
                 'video_url': video_data['url'],
+                'video_description': video_data.get('description', ''),
+                'video_duration': video_data.get('duration', 0),
+                'view_count': video_data.get('view_count', 0),
+                'channel': video_data.get('channel', ''),
+                'channel_id': video_data.get('channel_id', ''),
+                'thumbnail': video_data.get('thumbnail', ''),
+                'like_count': video_data.get('like_count', 0),
             }
             chunks.append(segment_with_metadata)
         
