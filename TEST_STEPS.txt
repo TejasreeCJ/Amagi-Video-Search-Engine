@@ -1,0 +1,42 @@
+QUICK TEST STEPS
+================
+
+1. START BACKEND SERVER:
+   Open a terminal and run:
+   python run_server.py
+   
+   Wait until you see: "Application startup complete"
+   Keep this terminal open!
+
+2. OPEN FRONTEND:
+   Option A (Easiest):
+   - Navigate to: C:\Users\tejuc\Desktop\Amagi\frontend
+   - Double-click: index.html
+   - It will open in your browser
+   
+   Option B (Use local server on port 3000):
+   - Open another terminal
+   - Run: python start_frontend.py
+   - Open: http://localhost:3000
+
+3. TEST THE APPLICATION:
+   a) Process a Playlist:
+      - Enter a YouTube playlist URL
+      - Click "Process Playlist"
+      - Wait for processing (takes time!)
+   
+   b) Search for Clips:
+      - Enter a search query
+      - Click "Search"
+      - Click on results to watch videos
+
+4. TEST API DIRECTLY:
+   - Open browser: http://localhost:8000/docs
+   - This shows interactive API documentation
+   - You can test endpoints directly
+
+TROUBLESHOOTING:
+- If frontend can't connect: Make sure backend is running on port 8000
+- If port 8080 is busy: Use Option A or start_frontend.py (uses port 3000)
+- Check browser console (F12) for errors
+

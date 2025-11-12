@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPTEL Video Search Engine</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 NPTEL Video Search Engine</h1>
+            <p class="subtitle">Search for specific clips in NPTEL lecture videos</p>
+        </header>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search for topics, concepts, or questions (e.g., 'law of conservation of energy')"
+                    autocomplete="off"
+                >
+                <button id="searchButton" onclick="performSearch()">Search</button>
+            </div>
+            <div id="loadingIndicator" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <span>Searching...</span>
+            </div>
+        </div>
+
+        <div class="playlist-section" id="playlistSection">
+            <h2>Process Playlist</h2>
+            <div class="playlist-box">
+                <input 
+                    type="text" 
+                    id="playlistInput" 
+                    placeholder="Enter YouTube playlist URL"
+                    autocomplete="off"
+                >
+                <button id="processButton" onclick="processPlaylist()">Process Playlist</button>
+            </div>
+            <div id="playlistLoading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <span>Processing playlist...</span>
+            </div>
+        </div>
+
+        <div id="resultsContainer" class="results-container"></div>
+    </div>
+
+    <div id="videoModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeVideoModal()">&times;</span>
+            <div id="videoPlayerContainer"></div>
+            <div class="video-info">
+                <h3 id="videoTitle"></h3>
+                <div class="clip-timeline">
+                    <div class="timeline-label">Clip Timeline:</div>
+                    <div class="timeline-bar">
+                        <div id="clipMarker" class="clip-marker"></div>
+                    </div>
+                    <div class="timeline-times">
+                        <span id="clipStartTime">0:00</span>
+                        <span id="clipEndTime">0:00</span>
+                    </div>
+                </div>
+                <div class="clip-transcript">
+                    <h4>Transcript:</h4>
+                    <p id="clipTranscript"></p>
+                </div>
+                <button class="jump-button" onclick="jumpToClip()">Jump to Clip</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
