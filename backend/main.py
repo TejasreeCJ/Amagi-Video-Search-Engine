@@ -3,7 +3,6 @@ FastAPI backend for video search engine
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
@@ -12,6 +11,7 @@ from backend.youtube_scraper import YouTubeScraper
 from backend.embedding_service import EmbeddingService
 from backend.pinecone_service import PineconeService
 from backend.rag_service import RAGService
+from backend.knowledge_graph_service import KnowledgeGraphService
 
 app = FastAPI(title="NPTEL Video Search Engine")
 
@@ -29,6 +29,7 @@ youtube_scraper = None
 embedding_service = None
 pinecone_service = None
 rag_service = None
+knowledge_graph_service = None
 
 def get_youtube_scraper():
     global youtube_scraper
@@ -61,6 +62,16 @@ def get_rag_service():
     return rag_service
 
 
+def get_knowledge_graph_service():
+    global knowledge_graph_service
+    if knowledge_graph_service is None:
+        try:
+            knowledge_graph_service = KnowledgeGraphService()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Knowledge graph service initialization failed: {str(e)}")
+    return knowledge_graph_service
+
+
 # Request/Response models
 class SearchQuery(BaseModel):
     query: str
@@ -69,6 +80,11 @@ class SearchQuery(BaseModel):
 
 class PlaylistRequest(BaseModel):
     playlist_url: str
+
+
+class VideoRequest(BaseModel):
+    video_url: str
+    min_clip_duration: Optional[float] = 30.0
 
 
 class SearchResponse(BaseModel):
@@ -191,6 +207,24 @@ async def health_check():
     Health check endpoint
     """
     return {"status": "healthy"}
+
+
+@app.post("/api/generate-knowledge-graph")
+async def generate_knowledge_graph(request: VideoRequest):
+    """
+    Generate an interactive knowledge graph from a video's transcript
+    """
+    try:
+        kg_service = get_knowledge_graph_service()
+        graph_data = kg_service.generate_knowledge_graph(
+            request.video_url, 
+            request.min_clip_duration
+        )
+        return graph_data
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating knowledge graph: {str(e)}")
 
 
 if __name__ == "__main__":

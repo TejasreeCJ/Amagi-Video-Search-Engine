@@ -406,6 +406,31 @@ document.getElementById('playlistInput').addEventListener('keypress', function(e
     }
 });
 
+document.getElementById('kgVideoInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        openKnowledgeGraph();
+    }
+});
+
+// Open Knowledge Graph page
+function openKnowledgeGraph() {
+    const videoUrl = document.getElementById('kgVideoInput').value.trim();
+    
+    if (!videoUrl) {
+        alert('Please enter a YouTube video URL');
+        return;
+    }
+    
+    // Validate YouTube URL
+    if (!videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
+        alert('Please enter a valid YouTube URL');
+        return;
+    }
+    
+    // Open knowledge graph page with video URL parameter
+    window.location.href = `knowledge-graph.html?video=${encodeURIComponent(videoUrl)}`;
+}
+
 // Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('videoModal');
@@ -416,4 +441,5 @@ window.onclick = function(event) {
 
 // Load YouTube API on page load
 loadYouTubeAPI();
+
 

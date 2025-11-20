@@ -33,7 +33,7 @@ header h1 {
     opacity: 0.9;
 }
 
-.search-section, .playlist-section {
+.search-section, .playlist-section, .knowledge-graph-section {
     background: white;
     border-radius: 15px;
     padding: 30px;
@@ -41,9 +41,63 @@ header h1 {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.playlist-section h2 {
+.playlist-section h2, .knowledge-graph-section h2 {
     margin-bottom: 20px;
     color: #333;
+}
+
+.knowledge-graph-section {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.knowledge-graph-section h2 {
+    color: white;
+    margin-bottom: 10px;
+}
+
+.section-description {
+    margin-bottom: 20px;
+    opacity: 0.95;
+    font-size: 0.95em;
+}
+
+.kg-box {
+    display: flex;
+    gap: 10px;
+}
+
+.kg-box input {
+    flex: 1;
+    padding: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s;
+}
+
+.kg-box input:focus {
+    outline: none;
+    background: white;
+    border-color: white;
+}
+
+.kg-box button {
+    padding: 15px 30px;
+    background: white;
+    color: #f5576c;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.kg-box button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 .search-box, .playlist-box {

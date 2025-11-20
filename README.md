@@ -2,8 +2,17 @@
 
 A web application to search for specific video clips in NPTEL (or any YouTube) playlists using speech-to-text data and vector embeddings with RAG (Retrieval Augmented Generation).
 
-## Features
+## 🚀 Quick Start
 
+**Easiest way to run this project:**
+
+Double-click: `scripts/start_servers.bat` (Windows)
+
+Or see [`docs/START_HERE.md`](docs/START_HERE.md) for detailed instructions.
+
+## ✨ Features
+
+### Core Features
 - 🔍 **Intelligent Search**: Search for specific topics, concepts, or questions in video transcripts
 - 📹 **Clip Retrieval**: Get precise video clips (not just full videos) matching your query
 - 🎯 **RAG-based**: Uses Retrieval Augmented Generation for better context understanding
@@ -11,6 +20,15 @@ A web application to search for specific video clips in NPTEL (or any YouTube) p
 - 💾 **Pinecone Storage**: Stores and retrieves vector embeddings efficiently
 - 🎬 **Video Player**: Watch videos with clip timeline visualization
 - ⏱️ **Timestamp Navigation**: Jump directly to relevant clips in videos
+
+### 🆕 NEW: Knowledge Graph Mind Map
+- 🧠 **Interactive Mind Maps**: Visualize video structure as an interactive graph
+- 🎨 **Topic Detection**: Automatically identifies key topics and concepts
+- 🔗 **Relationship Mapping**: Shows connections between related topics
+- ✂️ **Intelligent Segmentation**: Creates logical clips based on semantic boundaries
+- 🎯 **Hierarchical Visualization**: Color-coded sections (Intro → Main → Conclusion)
+
+See [`docs/KNOWLEDGE_GRAPH_README.md`](docs/KNOWLEDGE_GRAPH_README.md) for details.
 
 ## Architecture
 
@@ -28,7 +46,7 @@ A web application to search for specific video clips in NPTEL (or any YouTube) p
 
 ## Quick Start
 
-For a detailed setup guide, see [QUICKSTART.md](QUICKSTART.md).
+For a detailed setup guide, see [`docs/QUICKSTART.md`](docs/QUICKSTART.md).
 
 ### Quick Setup
 
@@ -39,13 +57,13 @@ pip install -r requirements.txt
 
 2. **Configure environment**:
 ```bash
-python setup_env.py
+python scripts/setup_env.py
 # Edit .env file with your Pinecone API key
 ```
 
 3. **Test setup**:
 ```bash
-python test_setup.py
+python tests/test_setup.py
 ```
 
 4. **Run the server**:
@@ -54,6 +72,53 @@ python run_server.py
 ```
 
 5. **Open frontend**: Open `frontend/index.html` in your browser
+
+## 📁 Project Structure
+
+```
+Amagi-Video-Search-Engine/
+├── backend/                    # Backend API services
+│   ├── config.py              # Configuration management
+│   ├── embedding_service.py   # Text embedding generation
+│   ├── knowledge_graph_service.py  # NEW: Knowledge graph generation
+│   ├── main.py                # FastAPI application
+│   ├── pinecone_service.py    # Vector database operations
+│   ├── rag_service.py         # RAG-based search
+│   └── youtube_scraper.py     # Video/transcript extraction
+│
+├── frontend/                   # Frontend web interface
+│   ├── index.html             # Main search page
+│   ├── knowledge-graph.html   # NEW: Knowledge graph visualization
+│   ├── app.js                 # Main application logic
+│   ├── knowledge-graph.js     # NEW: Graph interaction logic
+│   ├── styles.css             # Main styles
+│   └── graph-styles.css       # NEW: Graph visualization styles
+│
+├── docs/                       # Documentation
+│   ├── START_HERE.md          # Quick start guide
+│   ├── QUICKSTART.md          # Detailed setup instructions
+│   ├── KNOWLEDGE_GRAPH_README.md  # Knowledge graph feature docs
+│   ├── IMPLEMENTATION_SUMMARY.md  # Technical implementation details
+│   ├── VIDEO_PLAYBACK_FIX.md  # Troubleshooting video playback
+│   ├── HOW_TO_TEST.md         # Testing guidelines
+│   └── ...                    # Additional documentation
+│
+├── tests/                      # Test files
+│   ├── test_setup.py          # Setup verification
+│   ├── test_knowledge_graph.py  # Knowledge graph tests
+│   ├── test_playlist_url.py   # Playlist functionality tests
+│   └── ...                    # Additional test files
+│
+├── scripts/                    # Utility scripts
+│   ├── start_servers.bat      # Windows: Start both servers
+│   ├── setup_env.py           # Environment setup script
+│   └── example_usage.py       # API usage examples
+│
+├── .env                        # Environment variables (API keys)
+├── requirements.txt            # Python dependencies
+├── run_server.py              # Server entry point
+└── README.md                  # This file
+```
 
 ## Setup Details
 
@@ -64,7 +129,7 @@ python run_server.py
 
 ### Installation
 
-See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
+See [`docs/QUICKSTART.md`](docs/QUICKSTART.md) for detailed installation instructions.
 
 ## Usage
 
