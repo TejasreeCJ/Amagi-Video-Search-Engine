@@ -17,3 +17,15 @@ CHUNK_OVERLAP = 100  # characters
 # YouTube API settings
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
+# Whisper settings for transcript generation
+WHISPER_ENABLED = os.getenv("WHISPER_ENABLED", "false").lower() == "true"
+WHISPER_MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "tiny")
+WHISPER_LANGUAGE = os.getenv("WHISPER_LANGUAGE", "en")
+
+# Available Whisper models (for reference):
+# tiny: ~39 MB, fastest, lowest accuracy
+# base: ~74 MB
+# small: ~244 MB  
+# medium: ~769 MB
+# large: ~1550 MB, slowest, highest accuracy
+

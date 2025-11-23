@@ -58,7 +58,29 @@ If some videos in your playlist have transcripts:
 
 However, if **ALL** videos lack transcripts, you'll get this error.
 
-### Solution 5: Use a Test Playlist
+### Solution 5: Enable Whisper Transcript Generation
+
+**NEW!** Use AI to generate transcripts for videos without captions:
+
+1. **Enable Whisper in your environment**:
+   ```bash
+   # In your .env file
+   WHISPER_ENABLED=true
+   WHISPER_MODEL_SIZE=tiny
+   ```
+
+2. **Install Whisper dependencies**:
+   ```bash
+   pip install openai-whisper torch torchaudio
+   ```
+
+3. **Restart the server** and process your playlist again
+
+The system will now automatically generate transcripts using AI when YouTube captions aren't available.
+
+See [`docs/WHISPER_INTEGRATION.md`](WHISPER_INTEGRATION.md) for detailed setup instructions.
+
+### Solution 6: Use a Test Playlist
 
 Try processing a small test playlist first:
 
@@ -81,10 +103,11 @@ Try processing a small test playlist first:
 
 ## Next Steps
 
-1. **Check your playlist**: Run `python check_playlist_transcripts.py "YOUR_URL"`
-2. **Try a different playlist**: Use one with known captions
-3. **Check YouTube**: Verify videos have the CC icon enabled
-4. **Wait and retry**: If captions are being generated, wait and try again
+1. **Try Whisper (Recommended)**: Enable AI transcript generation - see Solution 5 above
+2. **Check your playlist**: Run `python check_playlist_transcripts.py "YOUR_URL"`
+3. **Try a different playlist**: Use one with known captions
+4. **Check YouTube**: Verify videos have the CC icon enabled
+5. **Wait and retry**: If captions are being generated, wait and try again
 
 ## Example: Testing with NPTEL
 

@@ -12,6 +12,7 @@ from backend.embedding_service import EmbeddingService
 from backend.pinecone_service import PineconeService
 from backend.rag_service import RAGService
 from backend.knowledge_graph_service import KnowledgeGraphService
+from backend.whisper_service import get_whisper_service
 
 app = FastAPI(title="NPTEL Video Search Engine")
 
@@ -130,10 +131,11 @@ async def process_playlist(request: PlaylistRequest):
                         detail=f"No videos with transcripts found in playlist.\n\n"
                                f"Found {video_count} video(s) in playlist, but none have captions/subtitles available.\n\n"
                                "SOLUTIONS:\n"
-                               "1. The videos don't have automatic captions enabled\n"
-                               "2. Try a different playlist with videos that have captions\n"
-                               "3. Enable automatic captions in YouTube Studio for these videos\n"
-                               "4. Try an NPTEL playlist (they usually have captions)\n\n"
+                               "1. Enable Whisper AI transcript generation (see docs/WHISPER_SETUP_GUIDE.md)\n"
+                               "2. The videos don't have automatic captions enabled\n"
+                               "3. Try a different playlist with videos that have captions\n"
+                               "4. Enable automatic captions in YouTube Studio for these videos\n"
+                               "5. Try an NPTEL playlist (they usually have captions)\n\n"
                                "Run this to check which videos have transcripts:\n"
                                "python check_playlist_transcripts.py \"YOUR_PLAYLIST_URL\""
                     )
@@ -225,6 +227,70 @@ async def generate_knowledge_graph(request: VideoRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating knowledge graph: {str(e)}")
+
+
+@app.get("/api/whisper-metrics")
+async def get_whisper_metrics():
+    """
+    Get Whisper accuracy metrics and performance statistics
+    """
+    try:
+        whisper_service = get_whisper_service()
+        if whisper_service:
+            metrics = whisper_service.get_accuracy_metrics()
+            return metrics
+        else:
+            return {
+                "error": "Whisper service not available",
+                "total_videos_processed": 0,
+                "successful_generations": 0,
+                "failed_generations": 0,
+                "success_rate": 0.0,
+                "average_processing_time": 0.0,
+                "total_audio_duration_processed": 0.0,
+                "average_processing_time_per_minute": 0.0
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving Whisper metrics: {str(e)}")
+
+
+@app.post("/api/reset-whisper-metrics")
+async def reset_whisper_metrics():
+    """
+    Reset Whisper accuracy metrics
+    """
+    try:
+        whisper_service = get_whisper_service()
+        if whisper_service:
+            whisper_service.reset_metrics()
+            return {"message": "Whisper metrics reset successfully"}
+        else:
+            raise HTTPException(status_code=503, detail="Whisper service not available")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error resetting Whisper metrics: {str(e)}")
+
+
+@app.post("/api/generate-transcript")
+async def generate_transcript(request: VideoRequest):
+    """
+    Generate transcript for a single video using Whisper
+    """
+    try:
+        whisper_service = get_whisper_service()
+        if not whisper_service:
+            raise HTTPException(status_code=503, detail="Whisper service not available")
+        
+        result = whisper_service.generate_transcript_for_video(request.video_url)
+        
+        if result:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail="Failed to generate transcript")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating transcript: {str(e)}")
 
 
 if __name__ == "__main__":

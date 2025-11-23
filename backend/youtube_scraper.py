@@ -5,6 +5,11 @@ import yt_dlp
 import json
 from typing import List, Dict, Optional
 import re
+from backend.whisper_service import get_whisper_service
+from backend.config import WHISPER_ENABLED
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class YouTubeScraper:
@@ -177,7 +182,30 @@ class YouTubeScraper:
                             print(f"  ⚠ No subtitle URL found for language: {lang}")
                 
                 if not transcript_segments:
-                    print(f"  ✗ No transcript segments extracted for this video")
+                    print(f"  ✗ No YouTube transcript segments found")
+                    print(f"  🔍 Checking Whisper availability...")
+                    
+                    # Try Whisper if enabled and no transcripts found
+                    if WHISPER_ENABLED:
+                        print(f"  🤖 WHISPER ENABLED: Starting AI transcript generation")
+                        print(f"     📹 This will download audio and generate transcript using AI")
+                        print(f"     ⏳ Processing time depends on video length (may take several minutes)")
+                        try:
+                            whisper_service = get_whisper_service()
+                            if whisper_service:
+                                whisper_result = whisper_service.generate_transcript_for_video(video_url, video_id)
+                                if whisper_result and whisper_result.get('transcript'):
+                                    print(f"  ✅ SUCCESS: Whisper generated {len(whisper_result['transcript'])} transcript segments")
+                                    return whisper_result
+                                else:
+                                    print(f"  ❌ Whisper failed to generate transcript")
+                            else:
+                                print(f"  ❌ Whisper service not available")
+                        except Exception as e:
+                            print(f"  ❌ Whisper error: {e}")
+                            logger.error(f"Whisper transcript generation failed for {video_url}: {e}")
+                    else:
+                        print(f"  ⚠️  Whisper is disabled. Enable it in .env file with WHISPER_ENABLED=true")
                 
                 return {
                     'video_id': video_id,
@@ -257,6 +285,7 @@ class YouTubeScraper:
                           "4. You have internet connection")
         
         print(f"\nProcessing {len(videos)} videos for transcripts...")
+        print(f"📋 Sources: YouTube captions + AI Whisper (if enabled)")
         videos_with_transcripts = []
         
         for i, video in enumerate(videos, 1):
@@ -264,7 +293,11 @@ class YouTubeScraper:
             video_data = self.get_video_transcript(video['url'])
             if video_data:
                 if video_data['transcript']:
-                    print(f"  ✓ Transcript found: {len(video_data['transcript'])} segments")
+                    source = video_data.get('transcript_source', 'youtube')
+                    if source == 'whisper':
+                        print(f"  🤖 AI Transcript generated: {len(video_data['transcript'])} segments")
+                    else:
+                        print(f"  ✓ YouTube transcript found: {len(video_data['transcript'])} segments")
                     videos_with_transcripts.append(video_data)
                 else:
                     print(f"  ✗ No transcript available for this video")
@@ -272,5 +305,15 @@ class YouTubeScraper:
                 print(f"  ✗ Failed to extract video data")
         
         print(f"\nSuccessfully processed {len(videos_with_transcripts)}/{len(videos)} videos with transcripts")
+        
+        # Show breakdown of transcript sources
+        youtube_transcripts = sum(1 for v in videos_with_transcripts if v.get('transcript_source') != 'whisper')
+        whisper_transcripts = sum(1 for v in videos_with_transcripts if v.get('transcript_source') == 'whisper')
+        
+        if whisper_transcripts > 0:
+            print(f"📊 Transcript Sources:")
+            print(f"   📺 YouTube captions: {youtube_transcripts} videos")
+            print(f"   🤖 AI Whisper: {whisper_transcripts} videos")
+        
         return videos_with_transcripts
 

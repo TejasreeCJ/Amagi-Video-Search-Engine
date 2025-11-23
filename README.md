@@ -30,6 +30,15 @@ Or see [`docs/START_HERE.md`](docs/START_HERE.md) for detailed instructions.
 
 See [`docs/KNOWLEDGE_GRAPH_README.md`](docs/KNOWLEDGE_GRAPH_README.md) for details.
 
+### 🆕 NEW: Whisper AI Transcript Generation
+- 🤖 **AI-Generated Transcripts**: Automatically creates transcripts for videos without captions
+- 🎯 **Multiple Models**: Support for tiny, base, small, medium, and large Whisper models
+- 📊 **Accuracy Metrics**: Track performance and accuracy statistics
+- 🔧 **Modular Design**: Completely independent feature that doesn't affect existing functionality
+- 📈 **Performance Monitoring**: Built-in metrics to monitor success rates and processing times
+
+See [`docs/WHISPER_INTEGRATION.md`](docs/WHISPER_INTEGRATION.md) for setup instructions.
+
 ## Architecture
 
 ### Backend
@@ -38,6 +47,7 @@ See [`docs/KNOWLEDGE_GRAPH_README.md`](docs/KNOWLEDGE_GRAPH_README.md) for detai
 - **sentence-transformers**: Creates vector embeddings from transcript text
 - **Pinecone**: Vector database for storing and searching embeddings
 - **RAG Service**: Retrieval Augmented Generation for query processing
+- **Whisper**: AI-powered transcript generation for videos without captions
 
 ### Frontend
 - **HTML/CSS/JavaScript**: Modern, responsive web interface
@@ -84,6 +94,7 @@ Amagi-Video-Search-Engine/
 │   ├── main.py                # FastAPI application
 │   ├── pinecone_service.py    # Vector database operations
 │   ├── rag_service.py         # RAG-based search
+│   ├── whisper_service.py     # NEW: AI transcript generation
 │   └── youtube_scraper.py     # Video/transcript extraction
 │
 ├── frontend/                   # Frontend web interface
@@ -107,6 +118,7 @@ Amagi-Video-Search-Engine/
 │   ├── test_setup.py          # Setup verification
 │   ├── test_knowledge_graph.py  # Knowledge graph tests
 │   ├── test_playlist_url.py   # Playlist functionality tests
+│   ├── test_whisper_service.py  # NEW: Whisper service tests
 │   └── ...                    # Additional test files
 │
 ├── scripts/                    # Utility scripts
@@ -282,6 +294,7 @@ Search for video clips matching a query.
 
 ### Issue: "No transcripts found"
 - Some videos may not have automatic captions
+- **NEW**: Enable Whisper AI transcript generation - see [`docs/WHISPER_INTEGRATION.md`](docs/WHISPER_INTEGRATION.md)
 - Try a different playlist or video that has captions enabled
 - Check if the video has English subtitles available
 
@@ -317,4 +330,5 @@ This project is open source and available under the MIT License.
 - Pinecone for vector database
 - sentence-transformers for embeddings
 - yt-dlp for YouTube data extraction
+- OpenAI Whisper for AI-powered transcript generation
 
