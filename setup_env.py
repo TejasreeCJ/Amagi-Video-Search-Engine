@@ -4,9 +4,13 @@ Setup script to create .env file
 import os
 
 def create_env_file():
-    env_content = """PINECONE_API_KEY=pcsk_2UHmn2_R99reTcQqpPpe5HXtNRXqvUdfPkivnpkWKai1pqLe2d4efJkC2XbWDjt41taMWr
-PINECONE_ENVIRONMENT=us-east-1-aws
-PINECONE_INDEX_NAME=semantic-search
+    env_content = """# Gemini API Key (Get from https://makersuite.google.com/app/apikey)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Neo4j Configuration (Get from Neo4j Desktop or AuraDB)
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=password
 """
     
     env_path = '.env'
@@ -21,11 +25,9 @@ PINECONE_INDEX_NAME=semantic-search
         f.write(env_content)
     
     print(f".env file created at {env_path}")
-    print("\nPlease edit .env and add your Pinecone API key:")
-    print("1. Sign up at https://www.pinecone.io/")
-    print("2. Create an index (dimension: 384, metric: cosine)")
-    print("3. Copy your API key and environment")
-    print("4. Update the .env file with your credentials")
+    print("\nPlease edit .env and add your API keys:")
+    print("1. GEMINI_API_KEY: Get from https://makersuite.google.com/app/apikey")
+    print("2. NEO4J_URI, USER, PASSWORD: Set up a local Neo4j instance or use AuraDB Free")
 
 if __name__ == "__main__":
     create_env_file()

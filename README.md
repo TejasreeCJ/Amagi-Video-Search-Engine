@@ -55,6 +55,18 @@ python run_server.py
 
 5. **Open frontend**: Open `frontend/index.html` in your browser
 
+## Development Scripts (Windows)
+
+We have provided PowerShell scripts to make development easier:
+
+- **`dev.ps1`**: Automatically kills old processes, starts the backend and frontend servers, and opens the browser. Use this to start or restart the app.
+- **`stop.ps1`**: Kills the backend and frontend processes.
+
+To run them from PowerShell:
+```powershell
+..\dev.ps1
+```
+
 ## Setup Details
 
 ### Prerequisites

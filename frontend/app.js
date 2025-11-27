@@ -74,7 +74,7 @@ async function performSearch() {
         }
         
         const data = await response.json();
-        displayResults(data.clips, data.query);
+        displayResults(data.results, data.query);
     } catch (error) {
         console.error('Error:', error);
         resultsContainer.innerHTML = `
@@ -104,28 +104,47 @@ function displayResults(clips, query) {
         return;
     }
     
-    resultsContainer.innerHTML = clips.map((clip, index) => `
+    resultsContainer.innerHTML = clips.map((clip, index) => {
+        // Handle fallback titles (e.g. "Segment 0-300") by showing transcript snippet instead
+        let displayTitle = clip.chapter_title;
+        if (displayTitle && displayTitle.startsWith("Segment ") && displayTitle.includes("-")) {
+            if (clip.chapter_description) {
+                displayTitle = clip.chapter_description.substring(0, 80) + "...";
+            }
+        }
+
+        return `
         <div class="result-card" onclick="openVideoModal(${index})" data-clip-index="${index}">
             <h3>${clip.video_title}</h3>
             <div class="video-meta">
-                Video ID: ${clip.video_id}
+                Chapter: <strong>${displayTitle}</strong>
             </div>
             <div class="clip-info">
                 <div class="clip-time">
-                    Clip: ${formatTime(clip.clip_start)} - ${formatTime(clip.clip_end)}
+                    Time: ${formatTime(clip.start)} - ${formatTime(clip.end)} <span class="duration-badge">(${formatDuration(clip.end - clip.start)})</span>
                 </div>
-                <div class="clip-text">
-                    ${clip.transcript.substring(0, 200)}${clip.transcript.length > 200 ? '...' : ''}
+                <div class="clip-text" style="font-style: italic; margin-bottom: 5px;">
+                    ${clip.chapter_description}
                 </div>
                 <div class="relevance-score">
-                    Relevance: ${(clip.relevance_score * 100).toFixed(1)}%
+                    Relevance: ${(clip.score * 100).toFixed(1)}%
                 </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
     
     // Store clips data
     window.searchResults = clips;
+}
+
+// Format duration in a readable format (e.g., "5m 30s")
+function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    if (mins > 0) {
+        return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
 }
 
 // Format time in seconds to MM:SS format
@@ -143,6 +162,8 @@ function openVideoModal(index) {
     currentVideoData = clip;
     const modal = document.getElementById('videoModal');
     const videoTitle = document.getElementById('videoTitle');
+    const chapterTitle = document.getElementById('chapterTitle');
+    const chapterDescription = document.getElementById('chapterDescription');
     const clipTranscript = document.getElementById('clipTranscript');
     const clipStartTime = document.getElementById('clipStartTime');
     const clipEndTime = document.getElementById('clipEndTime');
@@ -151,9 +172,11 @@ function openVideoModal(index) {
     
     // Set video info
     videoTitle.textContent = clip.video_title;
-    clipTranscript.textContent = clip.transcript;
-    clipStartTime.textContent = formatTime(clip.clip_start);
-    clipEndTime.textContent = formatTime(clip.clip_end);
+    chapterTitle.textContent = clip.chapter_title;
+    chapterDescription.textContent = clip.chapter_description;
+    clipTranscript.textContent = "Transcript not available in search result (check Neo4j)"; // Or fetch it if we stored it
+    clipStartTime.textContent = formatTime(clip.start);
+    clipEndTime.textContent = formatTime(clip.end);
     
     // Extract video ID from URL
     const videoId = extractVideoId(clip.video_url);
@@ -221,7 +244,7 @@ function initializeYouTubePlayer(videoId, clip) {
                     const checkTime = setInterval(() => {
                         try {
                             const currentTime = youtubePlayer.getCurrentTime();
-                            if (currentTime >= clip.clip_end) {
+                            if (currentTime >= clip.end) {
                                 youtubePlayer.pauseVideo();
                                 clearInterval(checkTime);
                             }
@@ -244,8 +267,8 @@ function updateTimelineMarker(clip) {
             try {
                 const duration = youtubePlayer.getDuration();
                 if (duration > 0) {
-                    const clipStartPercent = (clip.clip_start / duration) * 100;
-                    const clipEndPercent = (clip.clip_end / duration) * 100;
+                    const clipStartPercent = (clip.start / duration) * 100;
+                    const clipEndPercent = (clip.end / duration) * 100;
                     const clipWidth = clipEndPercent - clipStartPercent;
                     
                     clipMarker.style.left = `${clipStartPercent}%`;
@@ -269,7 +292,7 @@ function updateTimelineMarker(clip) {
 function jumpToClip() {
     if (!youtubePlayer || !currentVideoData) return;
     
-    const startTime = currentVideoData.clip_start;
+    const startTime = currentVideoData.start;
     youtubePlayer.seekTo(startTime, true);
     youtubePlayer.playVideo();
     
@@ -278,7 +301,7 @@ function jumpToClip() {
         if (youtubePlayer && youtubePlayer.getCurrentTime) {
             const checkTime = setInterval(() => {
                 const currentTime = youtubePlayer.getCurrentTime();
-                if (currentTime >= currentVideoData.clip_end) {
+                if (currentTime >= currentVideoData.end) {
                     youtubePlayer.pauseVideo();
                     clearInterval(checkTime);
                 }
