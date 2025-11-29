@@ -69,12 +69,12 @@ powershell
 
 This script will:
 
-Kill any existing processes on ports 8000 (Backend) and 3000 (Frontend).
-Start the FastAPI Backend.
-Start the Frontend Server.
-Automatically open your browser to http://localhost:3000.
+1. Kill any existing processes on ports 8000 (Backend) and 3000 (Frontend).
+2. Start the FastAPI Backend.
+3. Start the Frontend Server.
+4. Automatically open your browser to http://localhost:3000.
 
-###Option 2: Manual Run
+### Option 2: Manual Run
 If you prefer running services separately:
 
 Terminal 1 (Backend):
