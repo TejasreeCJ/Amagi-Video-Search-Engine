@@ -64,7 +64,7 @@ We provide a PowerShell script to automate the startup process (Windows).
 
 ### Option 1: One-Click Run (Recommended)
 Run the development script from the parent directory or root:
-```powershell
+powershell
 .\dev.ps1
 
 This script will:
@@ -73,7 +73,8 @@ Kill any existing processes on ports 8000 (Backend) and 3000 (Frontend).
 Start the FastAPI Backend.
 Start the Frontend Server.
 Automatically open your browser to http://localhost:3000.
-Option 2: Manual Run
+
+###Option 2: Manual Run
 If you prefer running services separately:
 
 Terminal 1 (Backend):
