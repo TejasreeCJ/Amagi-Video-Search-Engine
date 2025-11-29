@@ -5,6 +5,9 @@ import yt_dlp
 import json
 from typing import List, Dict, Optional
 import re
+import os
+import glob
+import uuid
 
 
 class YouTubeScraper:
@@ -104,77 +107,59 @@ class YouTubeScraper:
         Extract transcript with timestamps from a YouTube video
         Returns: Dict with video info and transcript segments
         """
+        # Use a unique temp filename to avoid collisions
+        temp_id = str(uuid.uuid4())
+        temp_template = f"temp_subs_{temp_id}_%(id)s"
+        
         ydl_opts = {
             **self.ydl_opts,
             'writesubtitles': True,
             'writeautomaticsub': True,
             'subtitleslangs': ['en'],
             'subtitlesformat': 'vtt',
+            'skip_download': True,
+            'outtmpl': temp_template,
         }
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(video_url, download=False)
+                # download=True is needed to trigger subtitle download even if skip_download is True for video
+                info = ydl.extract_info(video_url, download=True)
                 
                 video_id = info.get('id')
                 title = info.get('title')
                 description = info.get('description', '')
                 duration = info.get('duration', 0)
                 
-                # Try to get automatic captions first, then manual subtitles
-                subtitles = info.get('automatic_captions', {})
-                if not subtitles or 'en' not in subtitles:
-                    subtitles = info.get('subtitles', {})
-                
                 transcript_segments = []
                 
-                # Try English first, then any available language
-                languages_to_try = ['en']
-                if 'en' not in subtitles:
-                    available_langs = list(subtitles.keys())[:3] if subtitles else []
-                    if available_langs:
-                        languages_to_try = available_langs
-                        print(f"  English subtitles not available, trying: {languages_to_try}")
-                    else:
-                        print(f"  ⚠ No subtitles available for this video")
-                        return {
-                            'video_id': video_id,
-                            'title': title,
-                            'description': description,
-                            'duration': duration,
-                            'url': video_url,
-                            'transcript': [],
-                        }
+                # Find the downloaded subtitle file
+                # yt-dlp appends language code, e.g., .en.vtt
+                search_pattern = f"temp_subs_{temp_id}_{video_id}.*.vtt"
+                found_files = glob.glob(search_pattern)
                 
-                for lang in languages_to_try:
-                    if lang in subtitles:
-                        subtitle_url = None
-                        # Prefer VTT format, fallback to other formats
-                        preferred_formats = ['vtt', 'ttml', 'srv3', 'srv2', 'srv1']
-                        for fmt in subtitles[lang]:
-                            if fmt.get('ext') in preferred_formats:
-                                subtitle_url = fmt.get('url')
-                                if fmt.get('ext') == 'vtt':  # Prefer VTT
-                                    break
-                        
-                        if subtitle_url:
-                            try:
-                                import requests
-                                response = requests.get(subtitle_url, timeout=30)
-                                if response.status_code == 200:
-                                    transcript_segments = self._parse_vtt(response.text)
-                                    if transcript_segments:
-                                        print(f"  ✓ Successfully extracted {len(transcript_segments)} transcript segments ({lang})")
-                                        break
-                                    else:
-                                        print(f"  ⚠ No transcript segments found in subtitle file ({lang})")
-                                else:
-                                    print(f"  ⚠ Failed to fetch subtitles: HTTP {response.status_code}")
-                            except Exception as e:
-                                print(f"  ⚠ Error fetching subtitles ({lang}): {e}")
-                                continue
+                if found_files:
+                    vtt_file = found_files[0]
+                    print(f"  ✓ Found subtitle file: {vtt_file}")
+                    try:
+                        with open(vtt_file, 'r', encoding='utf-8') as f:
+                            vtt_content = f.read()
+                            transcript_segments = self._parse_vtt(vtt_content)
+                            
+                        if transcript_segments:
+                            print(f"  ✓ Successfully extracted {len(transcript_segments)} transcript segments")
                         else:
-                            print(f"  ⚠ No subtitle URL found for language: {lang}")
+                            print(f"  ⚠ No transcript segments parsed from file")
+                    except Exception as e:
+                        print(f"  ⚠ Error reading/parsing subtitle file: {e}")
+                    finally:
+                        # Clean up
+                        try:
+                            os.remove(vtt_file)
+                        except:
+                            pass
+                else:
+                    print(f"  ⚠ No subtitle file downloaded for this video")
                 
                 if not transcript_segments:
                     print(f"  ✗ No transcript segments extracted for this video")
@@ -189,6 +174,12 @@ class YouTubeScraper:
                 }
         except Exception as e:
             print(f"Error extracting transcript from {video_url}: {e}")
+            # Clean up any leftover files
+            try:
+                for f in glob.glob(f"temp_subs_{temp_id}_*"):
+                    os.remove(f)
+            except:
+                pass
             return None
 
     def _parse_vtt(self, vtt_content: str) -> List[Dict]:

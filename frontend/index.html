@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,7 +57,7 @@
             <div class="video-info">
                 <h3 id="videoTitle"></h3>
                 <div class="clip-timeline">
-                    <div class="timeline-label">Clip Timeline:</div>
+                    <div class="timeline-label">Chapter Timeline:</div>
                     <div class="timeline-bar">
                         <div id="clipMarker" class="clip-marker"></div>
                     </div>
@@ -66,10 +67,12 @@
                     </div>
                 </div>
                 <div class="clip-transcript">
-                    <h4>Transcript:</h4>
+                    <h4 id="chapterTitle">Chapter Title</h4>
+                    <p id="chapterDescription" style="font-style: italic; margin-bottom: 10px;"></p>
+                    <h4>Transcript Segment:</h4>
                     <p id="clipTranscript"></p>
                 </div>
-                <button class="jump-button" onclick="jumpToClip()">Jump to Clip</button>
+                <button class="jump-button" onclick="jumpToClip()">Jump to Chapter</button>
             </div>
         </div>
     </div>
