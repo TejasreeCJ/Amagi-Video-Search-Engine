@@ -1,267 +1,108 @@
-# NPTEL Video Search Engine
+# Amagi Video Search Engine (Neo4j + LLM Edition)
 
-A web application to search for specific video clips in NPTEL (or any YouTube) playlists using speech-to-text data and vector embeddings with RAG (Retrieval Augmented Generation).
+A powerful video search engine that allows you to search inside YouTube playlists (like NPTEL lectures) using **Hybrid Search** (Vector Semantic + Keyword) and **LLM-powered Chaptering**.
 
-## Features
+This project has been migrated from Pinecone to **Neo4j** to leverage Graph relationships and Hybrid Search capabilities.
 
-- 🔍 **Intelligent Search**: Search for specific topics, concepts, or questions in video transcripts
-- 📹 **Clip Retrieval**: Get precise video clips (not just full videos) matching your query
-- 🎯 **RAG-based**: Uses Retrieval Augmented Generation for better context understanding
-- 📊 **Vector Embeddings**: Uses sentence-transformers for semantic search
-- 💾 **Pinecone Storage**: Stores and retrieves vector embeddings efficiently
-- 🎬 **Video Player**: Watch videos with clip timeline visualization
-- ⏱️ **Timestamp Navigation**: Jump directly to relevant clips in videos
+## 🚀 Features
 
-## Architecture
+- **🧠 Hybrid Search**: Combines **Vector Similarity** (80%) and **Keyword Search** (20%) for highly accurate results.
+- **🤖 AI Chaptering**: Uses **Google Gemini 2.0** to intelligently segment videos into meaningful chapters with titles and summaries.
+- **🕸️ Graph Database**: Stores videos, chapters, and their relationships in **Neo4j**, enabling complex queries and "related video" recommendations.
+- **⏱️ Variable Clip Length**: Clips are dynamically sized based on the content topic, not arbitrary fixed chunks.
+- **🛡️ Robust Processing**: Handles API rate limits (Gemini) with automatic retries and fallback mechanisms.
+- **⚡ Developer Friendly**: Includes PowerShell scripts for one-click startup and shutdown.
 
-### Backend
-- **FastAPI**: RESTful API for video search
-- **yt-dlp**: Extracts video information and transcripts from YouTube
-- **sentence-transformers**: Creates vector embeddings from transcript text
-- **Pinecone**: Vector database for storing and searching embeddings
-- **RAG Service**: Retrieval Augmented Generation for query processing
+## 🏗️ Architecture
 
-### Frontend
-- **HTML/CSS/JavaScript**: Modern, responsive web interface
-- **YouTube IFrame API**: Embedded video player with clip navigation
-- **Search Interface**: Clean, intuitive search experience
+- **Backend**: FastAPI (Python)
+- **Database**: Neo4j (Graph + Vector Index + Fulltext Index)
+- **LLM**: Google Gemini (2.0 Pro / Flash) for content understanding
+- **Embeddings**: `sentence-transformers/all-MiniLM-L6-v2` (Local, fast, free)
+- **Frontend**: Vanilla JS + HTML/CSS (Lightweight)
 
-## Quick Start
+## 🛠️ Prerequisites
 
-For a detailed setup guide, see [QUICKSTART.md](QUICKSTART.md).
+1.  **Python 3.10+** installed.
+2.  **Neo4j Database**:
+    *   **Option A (Recommended)**: Install [Neo4j Desktop](https://neo4j.com/download/) locally.
+    *   **Option B**: Use [Neo4j Aura](https://neo4j.com/cloud/aura/) (Free Cloud Tier).
+    *   *Note: Ensure the APOC plugin is enabled if using Desktop (though core features use standard Cypher).*
+3.  **Google Gemini API Key**: Get one for free at [Google AI Studio](https://aistudio.google.com/).
 
-### Quick Setup
+## ⚙️ Installation & Setup
 
-1. **Install dependencies**:
-```bash
-pip install -r requirements.txt
-```
+1.  **Clone the repository**:
+    ```bash
+    git clone <repository-url>
+    cd Amagi-Video-Search-Engine
+    ```
 
-2. **Configure environment**:
-```bash
-python setup_env.py
-# Edit .env file with your Pinecone API key
-```
+2.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-3. **Test setup**:
-```bash
-python test_setup.py
-```
+3.  **Configure Environment**:
+    Create a `.env` file in the root directory (or edit the existing one):
+    ```ini
+    # Neo4j Configuration
+    NEO4J_URI=bolt://localhost:7687
+    NEO4J_USER=neo4j
+    NEO4J_PASSWORD=your_password
 
-4. **Run the server**:
-```bash
-python run_server.py
-```
+    # Google Gemini API (for Chapter Generation)
+    GEMINI_API_KEY=your_gemini_api_key
 
-5. **Open frontend**: Open `frontend/index.html` in your browser
+    # Optional: YouTube API (if using official API instead of scraper)
+    YOUTUBE_API_KEY=your_youtube_key
+    ```
 
-## Development Scripts (Windows)
+## ▶️ Running the Application
 
-We have provided PowerShell scripts to make development easier:
+We provide a PowerShell script to automate the startup process (Windows).
 
-- **`dev.ps1`**: Automatically kills old processes, starts the backend and frontend servers, and opens the browser. Use this to start or restart the app.
-- **`stop.ps1`**: Kills the backend and frontend processes.
-
-To run them from PowerShell:
+### Option 1: One-Click Run (Recommended)
+Run the development script from the parent directory or root:
 ```powershell
-..\dev.ps1
-```
+.\dev.ps1
 
-## Setup Details
+This script will:
 
-### Prerequisites
+Kill any existing processes on ports 8000 (Backend) and 3000 (Frontend).
+Start the FastAPI Backend.
+Start the Frontend Server.
+Automatically open your browser to http://localhost:3000.
+Option 2: Manual Run
+If you prefer running services separately:
 
-- Python 3.8+
-- Pinecone account (free tier available at https://www.pinecone.io/)
+Terminal 1 (Backend):
+python run_server.py
 
-### Installation
+Terminal 2 (Frontend):
+cd frontend
+python -m http.server 3000
 
-See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
+Then open http://localhost:3000 in your browser.
 
-## Usage
+📖 Usage Guide
+Process a Playlist:
 
-### 1. Process a Playlist
+Paste a YouTube Playlist URL (e.g., an NPTEL course).
+Click "Process Playlist".
+What happens? The backend downloads transcripts, sends them to Gemini to generate chapters, creates embeddings, and stores everything in Neo4j.
+Search:
 
-1. Open the web application
-2. Enter a YouTube playlist URL (e.g., NPTEL lecture series)
-3. Click "Process Playlist"
-4. Wait for the processing to complete (this may take several minutes depending on playlist size)
+Type a query like "What is the law of conservation of energy?" or "Explain rigid body equilibrium".
+The system performs a Hybrid Search (matching meaning + keywords).
+Results show the exact video chapter, a summary, and a direct link to the timestamp.
+Watch:
 
-### 2. Search for Video Clips
+Clicking a result opens the video starting 30 seconds before the relevant segment for context.
 
-1. Enter your search query in the search box (e.g., "law of conservation of energy")
-2. Click "Search"
-3. Browse through the results showing relevant video clips
-4. Click on any result to watch the video with the clip highlighted
+🔧 Troubleshooting
+Neo4j Connection Error: Ensure Neo4j is running and the NEO4J_URI in .env matches your instance (usually bolt://localhost:7687).
+Gemini Quota Exceeded: The system has built-in retries. If it fails, it falls back to using raw transcripts. You can try switching models in llm_service.py.
+Search Returns 500 Error: Check the backend terminal for the traceback. It usually indicates a database query issue.
 
-### 3. Watch and Navigate
-
-1. Click on a search result to open the video player
-2. The clip timeline shows where the relevant content is
-3. Click "Jump to Clip" to navigate directly to the relevant section
-4. The transcript for the clip is displayed below the video
-
-## How It Works
-
-### 1. Transcript Extraction
-- Uses `yt-dlp` to extract automatic captions from YouTube videos
-- Parses VTT format to get text with precise timestamps
-- Creates segments for each transcript chunk
-
-### 2. Embedding Generation
-- Uses `sentence-transformers/all-MiniLM-L6-v2` model for embeddings
-- Creates overlapping chunks for better context preservation
-- Each chunk includes: text, start time, end time, video metadata
-
-### 3. Vector Storage
-- Stores embeddings in Pinecone vector database
-- Each vector includes metadata: video ID, title, URL, timestamps, transcript text
-- Uses cosine similarity for semantic search
-
-### 4. RAG-based Search
-- User query is converted to an embedding
-- Searches Pinecone for similar vectors (semantic search)
-- Returns top-k most relevant clips with metadata
-- Results include relevance scores and full context
-
-### 5. Clip Display
-- Frontend displays video player with YouTube IFrame API
-- Timeline slider shows clip location
-- Jump-to-clip functionality navigates to precise timestamps
-
-## Configuration
-
-### Embedding Model
-The default model is `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions). You can change it in `backend/config.py`:
-
-```python
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-```
-
-Other good options:
-- `sentence-transformers/all-mpnet-base-v2` (768 dimensions, better quality)
-- `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (multilingual)
-
-### Chunk Size
-Adjust chunk size and overlap in `backend/config.py`:
-
-```python
-CHUNK_SIZE = 500  # characters
-CHUNK_OVERLAP = 100  # characters
-```
-
-## Project Structure
-
-```
-Amagi/
-├── backend/
-│   ├── __init__.py
-│   ├── main.py                 # FastAPI application
-│   ├── config.py               # Configuration
-│   ├── youtube_scraper.py      # YouTube data extraction
-│   ├── embedding_service.py    # Vector embedding generation
-│   ├── pinecone_service.py     # Pinecone integration
-│   └── rag_service.py          # RAG search service
-├── frontend/
-│   ├── index.html              # Main HTML page
-│   ├── styles.css              # Styling
-│   └── app.js                  # Frontend logic
-├── requirements.txt            # Python dependencies
-├── .env.example               # Environment variables template
-└── README.md                  # This file
-```
-
-## API Endpoints
-
-### `POST /api/process-playlist`
-Process a YouTube playlist and store embeddings in Pinecone.
-
-**Request:**
-```json
-{
-  "playlist_url": "https://www.youtube.com/playlist?list=..."
-}
-```
-
-**Response:**
-```json
-{
-  "message": "Playlist processed successfully",
-  "videos_processed": 10,
-  "chunks_created": 250
-}
-```
-
-### `POST /api/search`
-Search for video clips matching a query.
-
-**Request:**
-```json
-{
-  "query": "law of conservation of energy",
-  "top_k": 5
-}
-```
-
-**Response:**
-```json
-{
-  "clips": [
-    {
-      "video_id": "abc123",
-      "video_title": "Physics Lecture 1",
-      "video_url": "https://www.youtube.com/watch?v=abc123",
-      "clip_start": 125.5,
-      "clip_end": 180.2,
-      "transcript": "The law of conservation of energy states that...",
-      "relevance_score": 0.95
-    }
-  ],
-  "query": "law of conservation of energy"
-}
-```
-
-## Troubleshooting
-
-### Issue: "PINECONE_API_KEY not set"
-- Make sure you've created a `.env` file with your Pinecone API key
-- Check that the key is correct and has the right permissions
-
-### Issue: "No transcripts found"
-- Some videos may not have automatic captions
-- Try a different playlist or video that has captions enabled
-- Check if the video has English subtitles available
-
-### Issue: "Search returns no results"
-- Make sure you've processed a playlist first
-- Check that the Pinecone index has vectors stored
-- Try a different search query
-
-### Issue: "YouTube player not loading"
-- Check your internet connection
-- Make sure the YouTube IFrame API is accessible
-- Check browser console for errors
-
-## Future Enhancements
-
-- [ ] Support for multiple languages
-- [ ] Advanced filtering (by video, date, duration)
-- [ ] Batch processing for large playlists
-- [ ] Export search results
-- [ ] User authentication and saved searches
-- [ ] Better chunking strategies for long transcripts
-- [ ] Integration with other video platforms
-- [ ] Advanced RAG with LLM for query understanding
-
-## License
-
-This project is open source and available under the MIT License.
-
-## Acknowledgments
-
-- NPTEL for educational content
-- YouTube for video hosting
-- Pinecone for vector database
-- sentence-transformers for embeddings
-- yt-dlp for YouTube data extraction
 
