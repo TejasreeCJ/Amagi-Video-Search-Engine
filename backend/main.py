@@ -8,10 +8,20 @@ from typing import List, Optional
 import uvicorn
 import os
 
-from backend.youtube_scraper import YouTubeScraper
-from backend.embedding_service import EmbeddingService
-from backend.llm_service import LLMService
-from backend.neo4j_service import Neo4jService
+try:
+    # Try absolute imports (when running from parent directory)
+    from backend.youtube_scraper import YouTubeScraper
+    from backend.embedding_service import EmbeddingService
+    from backend.llm_service import LLMService
+    from backend.neo4j_service import Neo4jService
+    from backend.knowledge_graph_service import KnowledgeGraphService
+except ImportError:
+    # Fall back to relative imports (when running from backend directory)
+    from youtube_scraper import YouTubeScraper
+    from embedding_service import EmbeddingService
+    from llm_service import LLMService
+    from neo4j_service import Neo4jService
+    from knowledge_graph_service import KnowledgeGraphService
 
 app = FastAPI(title="NPTEL Video Search Engine")
 
@@ -29,6 +39,7 @@ youtube_scraper = None
 embedding_service = None
 llm_service = None
 neo4j_service = None
+knowledge_graph_service = None
 
 def get_youtube_scraper():
     global youtube_scraper
@@ -59,6 +70,16 @@ def get_neo4j_service():
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Neo4j initialization failed: {str(e)}")
     return neo4j_service
+
+def get_knowledge_graph_service():
+    global knowledge_graph_service
+    if knowledge_graph_service is None:
+        try:
+            neo4j = get_neo4j_service()
+            knowledge_graph_service = KnowledgeGraphService(neo4j.driver)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Knowledge graph service initialization failed: {str(e)}")
+    return knowledge_graph_service
 
 
 # Request/Response models
@@ -174,6 +195,93 @@ async def get_related(video_id: str):
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@app.post("/api/knowledge-graph/build")
+async def build_knowledge_graph(similarity_threshold: float = 0.7, max_connections: int = 5):
+    """
+    Build the knowledge graph by creating relationships between chapters.
+    This should be run after processing playlists.
+    """
+    try:
+        kg_service = get_knowledge_graph_service()
+        kg_service.build_knowledge_graph(similarity_threshold, max_connections)
+        stats = kg_service.get_graph_statistics()
+        return {
+            "message": "Knowledge graph built successfully",
+            "statistics": stats
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/knowledge-graph")
+async def get_knowledge_graph(video_id: Optional[str] = None, limit: int = 500, auto_build: bool = True):
+    """
+    Get the knowledge graph structure for visualization.
+    If video_id is provided, returns graph focused on that video.
+    Otherwise returns the entire graph (up to limit).
+
+    If auto_build=True (default), automatically builds the graph if it doesn't exist yet.
+    """
+    try:
+        kg_service = get_knowledge_graph_service()
+        graph_data = kg_service.get_knowledge_graph(video_id, limit, auto_build)
+        return graph_data
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/knowledge-graph/learning-path/{target_chapter_id}")
+async def get_learning_path(target_chapter_id: str, start_chapter_id: Optional[str] = None):
+    """
+    Get the optimal learning path to reach a target chapter.
+    If start_chapter_id is provided, finds path from start to target.
+    Otherwise finds all prerequisites for the target.
+    """
+    try:
+        kg_service = get_knowledge_graph_service()
+        path = kg_service.get_learning_path(target_chapter_id, start_chapter_id)
+        return {
+            "target_chapter_id": target_chapter_id,
+            "start_chapter_id": start_chapter_id,
+            "path": path
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/knowledge-graph/stats")
+async def get_graph_stats():
+    """
+    Get statistics about the knowledge graph.
+    """
+    try:
+        kg_service = get_knowledge_graph_service()
+        stats = kg_service.get_graph_statistics()
+        stats['is_built'] = kg_service.is_graph_built()
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/knowledge-graph/videos")
+async def get_all_videos():
+    """
+    Get list of all videos for filtering the knowledge graph.
+    """
+    try:
+        kg_service = get_knowledge_graph_service()
+        videos = kg_service.get_all_videos()
+        return {"videos": videos}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

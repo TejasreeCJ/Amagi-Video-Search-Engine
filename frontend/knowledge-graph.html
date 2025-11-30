@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph - NPTEL Video Search</title>
+    <link rel="stylesheet" href="knowledge-graph.css">
+    <!-- Vis.js Network Library -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Three.js for 3D visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>🧠 Knowledge Graph</h1>
+                <p class="subtitle">Interactive learning pathway visualization</p>
+            </div>
+            <nav class="navigation">
+                <a href="index.html" class="nav-link">🏠 Home</a>
+                <a href="knowledge-graph.html" class="nav-link active">🧠 Knowledge Graph</a>
+            </nav>
+        </header>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <div class="toolbar-group">
+                    <label>View</label>
+                    <select id="graphScope" onchange="updateGraphScope()" class="toolbar-select">
+                        <option value="all">All Chapters</option>
+                        <option value="video">By Video</option>
+                    </select>
+                    <select id="videoSelect" onchange="loadGraphForVideo()" class="toolbar-select" style="display: none;">
+                        <option value="">Select video...</option>
+                    </select>
+                </div>
+
+                <div class="toolbar-group">
+                    <label>Layout</label>
+                    <select id="layoutSelect" onchange="changeLayout()" class="toolbar-select">
+                        <option value="hierarchical">Learning Path (Recommended)</option>
+                        <option value="timeline">Timeline Flow</option>
+                        <option value="radial">Topic Tree</option>
+                        <option value="cluster">By Video</option>
+                        <option value="forceDirected">Network View</option>
+                        <option value="circular">Circular</option>
+                        <option value="3d">3D View</option>
+                    </select>
+                    <button onclick="showLayoutInfo()" class="info-btn" title="Layout Guide">?</button>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
+                <button id="refreshGraphBtn" class="toolbar-btn" onclick="loadKnowledgeGraph()" title="Refresh Graph">
+                    🔄 Refresh
+                </button>
+                <button class="toolbar-btn" onclick="toggleAdvancedSettings()" title="Advanced Settings">
+                    ⚙️ Settings
+                </button>
+            </div>
+
+            <div class="stats-compact">
+                <div class="stat-compact">
+                    <span class="stat-value" id="totalNodes">-</span>
+                    <span class="stat-label-small">Chapters</span>
+                </div>
+                <div class="stat-compact">
+                    <span class="stat-value" id="totalEdges">-</span>
+                    <span class="stat-label-small">Links</span>
+                </div>
+                <div class="stat-compact">
+                    <span class="stat-value" id="totalVideos">-</span>
+                    <span class="stat-label-small">Videos</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Settings Panel (collapsible) -->
+        <div id="advancedSettings" class="advanced-settings" style="display: none;">
+            <h3>Advanced Graph Settings</h3>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label for="similarityThreshold">
+                        Similarity Threshold
+                        <span class="tooltip-icon" title="Higher values = fewer, stronger connections">?</span>
+                    </label>
+                    <input type="range" id="similarityThreshold" min="0.5" max="1.0" step="0.05" value="0.75">
+                    <span id="similarityValue" class="setting-value">0.75</span>
+                </div>
+
+                <div class="setting-item">
+                    <label for="maxConnections">
+                        Max Connections
+                        <span class="tooltip-icon" title="Maximum links per chapter">?</span>
+                    </label>
+                    <input type="range" id="maxConnections" min="1" max="10" step="1" value="3">
+                    <span id="maxConnectionsValue" class="setting-value">3</span>
+                </div>
+
+                <div class="setting-item full-width">
+                    <button id="buildGraphBtn" class="action-button primary-btn" onclick="buildKnowledgeGraph()">
+                        🔨 Rebuild Knowledge Graph
+                    </button>
+                    <p class="setting-hint">Rebuilds graph relationships based on settings above</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="graph-container">
+            <div id="loadingIndicator" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <span>Loading knowledge graph...</span>
+            </div>
+
+            <!-- Learning Direction Indicator -->
+            <div id="learningDirection" class="learning-direction" style="display: none;">
+                <div class="direction-content">
+                    <span id="directionText">⬇️ Start from TOP</span>
+                </div>
+            </div>
+
+            <div id="graphNetwork"></div>
+        </div>
+
+        <div class="info-panel" id="infoPanel" style="display: none;">
+            <div class="info-header">
+                <h3 id="nodeTitle">Chapter Information</h3>
+                <button class="close-btn" onclick="closeInfoPanel()">×</button>
+            </div>
+            <div class="info-content">
+                <div class="info-section">
+                    <h4>Description</h4>
+                    <p id="nodeDescription">Select a node to view details</p>
+                </div>
+                <div class="info-section">
+                    <h4>Timeline</h4>
+                    <p id="nodeTimeline">-</p>
+                </div>
+                <div class="info-section">
+                    <h4>Connections</h4>
+                    <div id="nodeConnections">-</div>
+                </div>
+                <div class="info-actions">
+                    <button class="action-button" onclick="playChapterVideo()">
+                        ▶️ Play Chapter
+                    </button>
+                    <button class="action-button secondary" onclick="showLearningPath()">
+                        🎯 Show Learning Path
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h4>Graph Guide</h4>
+            <p style="font-size: 0.85rem; margin-bottom: 10px; color: #666;">
+                <strong>Node Colors:</strong> Each color represents a different video
+            </p>
+            <strong style="font-size: 0.9rem;">Relationship Types:</strong>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #4CAF50;"></span>
+                <span>Next Topic (Sequential)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #2196F3;"></span>
+                <span>Similar To (High Similarity)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #FF9800;"></span>
+                <span>Relates To (Related)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background: #9C27B0;"></span>
+                <span>Prerequisite Of</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Info Modal -->
+    <div id="layoutInfoModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeLayoutInfo()">&times;</span>
+            <h2 style="color: #667eea; margin-bottom: 20px;">📐 Graph Layout Guide</h2>
+
+            <div class="layout-info-section" style="border-left-color: #4CAF50; background: #f0fdf4;">
+                <h3>1. Learning Path (Hierarchical) ⭐ RECOMMENDED</h3>
+                <p><strong>How it works:</strong> Top-to-bottom flow showing clear progression: Prerequisites at top → Advanced topics at bottom.</p>
+                <p><strong>Perfect for:</strong> Students who need structure and direction in their learning journey</p>
+                <p><strong>Learning benefit:</strong> Shows exactly which topics to learn first, with a clear path to advanced concepts</p>
+                <p><strong>Direction:</strong> ⬇️ Start at TOP, work your way DOWN</p>
+            </div>
+
+            <div class="layout-info-section" style="border-left-color: #2196F3; background: #eff6ff;">
+                <h3>2. Timeline Flow ⏱️</h3>
+                <p><strong>How it works:</strong> Left-to-right progression showing natural learning sequence.</p>
+                <p><strong>Perfect for:</strong> Following the course as it was designed, chronological learning</p>
+                <p><strong>Learning benefit:</strong> See how topics build on each other in order</p>
+                <p><strong>Direction:</strong> ➡️ Start at LEFT, progress to RIGHT</p>
+            </div>
+
+            <div class="layout-info-section">
+                <h3>3. Topic Tree (Radial)</h3>
+                <p><strong>How it works:</strong> Mind-map style with major topics at center, related concepts radiating outward.</p>
+                <p><strong>Perfect for:</strong> Deep-diving into specific topics</p>
+                <p><strong>Learning benefit:</strong> See how subtopics branch from main concepts</p>
+                <p><strong>Direction:</strong> 🎯 Start at CENTER, explore OUTWARD</p>
+            </div>
+
+            <div class="layout-info-section">
+                <h3>4. By Video (Cluster)</h3>
+                <p><strong>How it works:</strong> Groups chapters by their source video.</p>
+                <p><strong>Perfect for:</strong> Understanding course organization</p>
+                <p><strong>Learning benefit:</strong> See connections across different lectures</p>
+                <p><strong>Direction:</strong> 📹 Explore by video clusters</p>
+            </div>
+
+            <div class="layout-info-section">
+                <h3>5. Network View (Force-Directed)</h3>
+                <p><strong>How it works:</strong> Natural clustering based on relationships.</p>
+                <p><strong>Perfect for:</strong> Discovering unexpected connections</p>
+                <p><strong>Learning benefit:</strong> Find alternative learning paths</p>
+                <p><strong>⚠️ Warning:</strong> No clear direction - can feel overwhelming!</p>
+            </div>
+
+            <div class="layout-info-section">
+                <h3>6. Circular</h3>
+                <p><strong>How it works:</strong> All topics arranged in a circle.</p>
+                <p><strong>Perfect for:</strong> Presentations and overviews</p>
+                <p><strong>⚠️ Warning:</strong> No learning direction provided</p>
+            </div>
+
+            <div class="layout-info-section">
+                <h3>7. 3D View</h3>
+                <p><strong>How it works:</strong> Interactive 3D space (drag to rotate, scroll to zoom).</p>
+                <p><strong>Perfect for:</strong> Very large graphs with 100+ topics</p>
+                <p><strong>Learning benefit:</strong> Reduces visual clutter</p>
+                <p><strong>Controls:</strong> 🖱️ Drag = Rotate, Scroll = Zoom, Click = Select</p>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
+                <strong>🎓 For Students:</strong><br>
+                • <strong>First time learning?</strong> Use <strong>Learning Path</strong> or <strong>Timeline Flow</strong><br>
+                • <strong>Need structure?</strong> Stick with <strong>Learning Path</strong><br>
+                • <strong>Reviewing?</strong> Try <strong>Topic Tree</strong> or <strong>Network View</strong><br>
+                • <strong>Graph too messy?</strong> Switch to <strong>3D View</strong> or adjust settings
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Player Modal (reused from main app) -->
+    <div id="videoModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeVideoModal()">&times;</span>
+            <div id="videoPlayerContainer"></div>
+            <div class="video-info">
+                <h3 id="videoTitle"></h3>
+                <div class="clip-timeline">
+                    <div class="timeline-label">Chapter Timeline:</div>
+                    <div class="timeline-bar">
+                        <div id="clipMarker" class="clip-marker"></div>
+                    </div>
+                    <div class="timeline-times">
+                        <span id="clipStartTime">0:00</span>
+                        <span id="clipEndTime">0:00</span>
+                    </div>
+                </div>
+                <div class="clip-transcript">
+                    <h4 id="chapterTitle">Chapter Title</h4>
+                    <p id="chapterDescription" style="font-style: italic; margin-bottom: 10px;"></p>
+                </div>
+                <button class="jump-button" onclick="jumpToClip()">Jump to Chapter</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="knowledge-graph.js"></script>
+</body>
+</html>
