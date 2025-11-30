@@ -264,4 +264,3 @@ class YouTubeScraper:
         
         print(f"\nSuccessfully processed {len(videos_with_transcripts)}/{len(videos)} videos with transcripts")
         return videos_with_transcripts
-

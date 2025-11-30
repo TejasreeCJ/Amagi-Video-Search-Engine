@@ -15,6 +15,7 @@ A web application to search for specific video clips in NPTEL (or any YouTube) p
 ## Architecture
 
 ### Backend
+
 - **FastAPI**: RESTful API for video search
 - **yt-dlp**: Extracts video information and transcripts from YouTube
 - **sentence-transformers**: Creates vector embeddings from transcript text
@@ -22,6 +23,7 @@ A web application to search for specific video clips in NPTEL (or any YouTube) p
 - **RAG Service**: Retrieval Augmented Generation for query processing
 
 ### Frontend
+
 - **HTML/CSS/JavaScript**: Modern, responsive web interface
 - **YouTube IFrame API**: Embedded video player with clip navigation
 - **Search Interface**: Clean, intuitive search experience
@@ -33,22 +35,26 @@ For a detailed setup guide, see [QUICKSTART.md](QUICKSTART.md).
 ### Quick Setup
 
 1. **Install dependencies**:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 2. **Configure environment**:
+
 ```bash
 python setup_env.py
 # Edit .env file with your Pinecone API key
 ```
 
 3. **Test setup**:
+
 ```bash
 python test_setup.py
 ```
 
 4. **Run the server**:
+
 ```bash
 python run_server.py
 ```
@@ -63,6 +69,7 @@ We have provided PowerShell scripts to make development easier:
 - **`stop.ps1`**: Kills the backend and frontend processes.
 
 To run them from PowerShell:
+
 ```powershell
 ..\dev.ps1
 ```
@@ -104,27 +111,32 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
 ## How It Works
 
 ### 1. Transcript Extraction
+
 - Uses `yt-dlp` to extract automatic captions from YouTube videos
 - Parses VTT format to get text with precise timestamps
 - Creates segments for each transcript chunk
 
 ### 2. Embedding Generation
+
 - Uses `sentence-transformers/all-MiniLM-L6-v2` model for embeddings
 - Creates overlapping chunks for better context preservation
 - Each chunk includes: text, start time, end time, video metadata
 
 ### 3. Vector Storage
+
 - Stores embeddings in Pinecone vector database
 - Each vector includes metadata: video ID, title, URL, timestamps, transcript text
 - Uses cosine similarity for semantic search
 
 ### 4. RAG-based Search
+
 - User query is converted to an embedding
 - Searches Pinecone for similar vectors (semantic search)
 - Returns top-k most relevant clips with metadata
 - Results include relevance scores and full context
 
 ### 5. Clip Display
+
 - Frontend displays video player with YouTube IFrame API
 - Timeline slider shows clip location
 - Jump-to-clip functionality navigates to precise timestamps
@@ -132,6 +144,7 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
 ## Configuration
 
 ### Embedding Model
+
 The default model is `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions). You can change it in `backend/config.py`:
 
 ```python
@@ -139,10 +152,12 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 ```
 
 Other good options:
+
 - `sentence-transformers/all-mpnet-base-v2` (768 dimensions, better quality)
 - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (multilingual)
 
 ### Chunk Size
+
 Adjust chunk size and overlap in `backend/config.py`:
 
 ```python
@@ -174,9 +189,11 @@ Amagi/
 ## API Endpoints
 
 ### `POST /api/process-playlist`
+
 Process a YouTube playlist and store embeddings in Pinecone.
 
 **Request:**
+
 ```json
 {
   "playlist_url": "https://www.youtube.com/playlist?list=..."
@@ -184,6 +201,7 @@ Process a YouTube playlist and store embeddings in Pinecone.
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Playlist processed successfully",
@@ -193,9 +211,11 @@ Process a YouTube playlist and store embeddings in Pinecone.
 ```
 
 ### `POST /api/search`
+
 Search for video clips matching a query.
 
 **Request:**
+
 ```json
 {
   "query": "law of conservation of energy",
@@ -204,6 +224,7 @@ Search for video clips matching a query.
 ```
 
 **Response:**
+
 ```json
 {
   "clips": [
@@ -224,20 +245,24 @@ Search for video clips matching a query.
 ## Troubleshooting
 
 ### Issue: "PINECONE_API_KEY not set"
+
 - Make sure you've created a `.env` file with your Pinecone API key
 - Check that the key is correct and has the right permissions
 
 ### Issue: "No transcripts found"
+
 - Some videos may not have automatic captions
 - Try a different playlist or video that has captions enabled
 - Check if the video has English subtitles available
 
 ### Issue: "Search returns no results"
+
 - Make sure you've processed a playlist first
 - Check that the Pinecone index has vectors stored
 - Try a different search query
 
 ### Issue: "YouTube player not loading"
+
 - Check your internet connection
 - Make sure the YouTube IFrame API is accessible
 - Check browser console for errors
@@ -264,4 +289,3 @@ This project is open source and available under the MIT License.
 - Pinecone for vector database
 - sentence-transformers for embeddings
 - yt-dlp for YouTube data extraction
-

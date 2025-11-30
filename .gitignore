@@ -66,3 +66,4 @@ pinecone_index/
 .coverage
 htmlcov/
 
+cookies.txt
