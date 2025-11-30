@@ -3,7 +3,7 @@
 ## Prerequisites
 
 1. **Python 3.8+** installed
-2. **Pinecone Account** (free tier available at https://www.pinecone.io/)
+2. **Neo4j AuraDB Account** (free tier available at https://neo4j.com/cloud/platform/aura-graph-database/)
 
 ## Setup Steps
 
@@ -21,25 +21,19 @@ Create a `.env` file in the project root:
 python setup_env.py
 ```
 
-Or manually create `.env` with:
+This will create a template `.env` file. You need to fill in your API keys.
 
-```
-PINECONE_API_KEY=your_pinecone_api_key_here
-PINECONE_ENVIRONMENT=us-east-1-aws
-PINECONE_INDEX_NAME=nptel-video-search
-```
+### 3. Get Database Credentials
 
-### 3. Get Pinecone API Key
-
-1. Sign up at https://www.pinecone.io/
-2. Create a new index:
-   - Name: `nptel-video-search`
-   - Dimension: `384`
-   - Metric: `cosine`
-   - Cloud: `AWS`
-   - Region: `us-east-1` (or your preferred region)
-3. Copy your API key from the dashboard
-4. Update `.env` file with your API key and environment
+#### Neo4j AuraDB (Recommended)
+1. Sign up at [Neo4j AuraDB](https://neo4j.com/cloud/platform/aura-graph-database/)
+2. Create a new **Free** instance
+3. Download the credentials file (contains your password)
+4. Copy the **Connection URI** (starts with `neo4j+s://`)
+5. Update `.env`:
+   - `NEO4J_URI`: Your Connection URI
+   - `NEO4J_USER`: `neo4j`
+   - `NEO4J_PASSWORD`: The password you saved
 
 ### 4. Test Setup
 
@@ -47,7 +41,7 @@ PINECONE_INDEX_NAME=nptel-video-search
 python test_setup.py
 ```
 
-This will verify that all dependencies are installed and Pinecone is configured correctly.
+This will verify that all dependencies are installed and Neo4j is configured correctly.
 
 ### 5. Start the Backend Server
 

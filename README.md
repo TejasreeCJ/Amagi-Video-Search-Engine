@@ -19,7 +19,7 @@ A web application to search for specific video clips in NPTEL (or any YouTube) p
 - **FastAPI**: RESTful API for video search
 - **yt-dlp**: Extracts video information and transcripts from YouTube
 - **sentence-transformers**: Creates vector embeddings from transcript text
-- **Pinecone**: Vector database for storing and searching embeddings
+- **Neo4j**: Graph database for storing and searching embeddings and metadata
 - **RAG Service**: Retrieval Augmented Generation for query processing
 
 ### Frontend

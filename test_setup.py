@@ -11,11 +11,11 @@ def test_imports():
         'uvicorn',
         'dotenv',
         'yt_dlp',
-        'pinecone',
         'sentence_transformers',
         'pydantic',
         'numpy',
         'requests',
+        'neo4j',
     ]
     
     missing_packages = []
@@ -29,21 +29,6 @@ def test_imports():
                 importlib.import_module('yt_dlp')
             elif package == 'sentence_transformers':
                 importlib.import_module('sentence_transformers')
-            elif package == 'pinecone':
-                # Check for pinecone package - newer versions use 'pinecone', not 'pinecone-client'
-                try:
-                    importlib.import_module('pinecone')
-                except Exception as e:
-                    error_msg = str(e)
-                    if 'pinecone-client' in error_msg:
-                        print(f"✗ {package} package conflict detected")
-                        print("  Error: The official Pinecone package has been renamed.")
-                        print("  Solution: pip uninstall pinecone-client")
-                        print("            pip install pinecone")
-                        missing_packages.append(package)
-                        continue
-                    else:
-                        raise
             else:
                 importlib.import_module(package)
             print(f"✓ {package} is installed")
@@ -76,12 +61,12 @@ def test_env_file():
     from dotenv import load_dotenv
     load_dotenv()
     
-    required_vars = ['PINECONE_API_KEY', 'PINECONE_ENVIRONMENT']
+    required_vars = ['NEO4J_URI', 'NEO4J_USER', 'NEO4J_PASSWORD', 'GEMINI_API_KEY']
     missing_vars = []
     
     for var in required_vars:
         value = os.getenv(var)
-        if not value or value == f'your_{var.lower()}_here':
+        if not value or 'your_' in value:
             print(f"✗ {var} is not set in .env file")
             missing_vars.append(var)
         else:
@@ -95,24 +80,17 @@ def test_env_file():
         print("\n✓ All required environment variables are set!")
         return True
 
-def test_pinecone_connection():
-    """Test Pinecone connection"""
+def test_neo4j_connection():
+    """Test Neo4j connection"""
     try:
-        from backend.config import PINECONE_API_KEY, PINECONE_ENVIRONMENT, PINECONE_INDEX_NAME
-        from pinecone import Pinecone
-        
-        if not PINECONE_API_KEY or PINECONE_API_KEY == 'your_pinecone_api_key_here':
-            print("\n✗ Pinecone API key not configured")
-            return False
-        
-        print(f"\nTesting Pinecone connection...")
-        pc = Pinecone(api_key=PINECONE_API_KEY)
-        indexes = pc.list_indexes()
-        print(f"✓ Connected to Pinecone")
-        print(f"✓ Available indexes: {[idx.name for idx in indexes]}")
+        from backend.neo4j_service import Neo4jService
+        print(f"\nTesting Neo4j connection...")
+        neo4j = Neo4jService()
+        neo4j.close()
+        print(f"✓ Connected to Neo4j")
         return True
     except Exception as e:
-        print(f"\n✗ Pinecone connection failed: {e}")
+        print(f"\n✗ Neo4j connection failed: {e}")
         return False
 
 if __name__ == "__main__":
@@ -127,10 +105,10 @@ if __name__ == "__main__":
     env_ok = test_env_file()
     
     if packages_ok and env_ok:
-        print("\n3. Testing Pinecone connection...")
-        pinecone_ok = test_pinecone_connection()
+        print("\n3. Testing Neo4j connection...")
+        neo4j_ok = test_neo4j_connection()
         
-        if packages_ok and env_ok and pinecone_ok:
+        if packages_ok and env_ok and neo4j_ok:
             print("\n" + "=" * 50)
             print("✓ All tests passed! Setup is complete.")
             print("=" * 50)

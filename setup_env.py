@@ -7,10 +7,11 @@ def create_env_file():
     env_content = """# Gemini API Key (Get from https://makersuite.google.com/app/apikey)
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Neo4j Configuration (Get from Neo4j Desktop or AuraDB)
-NEO4J_URI=bolt://localhost:7687
+# Neo4j Configuration (Get from https://neo4j.com/cloud/platform/aura-graph-database/)
+# For AuraDB, use the URI format: neo4j+s://<your-instance-id>.databases.neo4j.io
+NEO4J_URI=neo4j+s://your-instance-id.databases.neo4j.io
 NEO4J_USER=neo4j
-NEO4J_PASSWORD=password
+NEO4J_PASSWORD=your-password-here
 
 WHISPER_ENABLED=true
 WHISPER_MODEL_SIZE=tiny
@@ -31,7 +32,7 @@ WHISPER_LANGUAGE=en
     print(f".env file created at {env_path}")
     print("\nPlease edit .env and add your API keys:")
     print("1. GEMINI_API_KEY: Get from https://makersuite.google.com/app/apikey")
-    print("2. NEO4J_URI, USER, PASSWORD: Set up a local Neo4j instance or use AuraDB Free")
+    print("2. NEO4J_URI, USER, PASSWORD: Create a free instance at https://neo4j.com/cloud/platform/aura-graph-database/")
 
 if __name__ == "__main__":
     create_env_file()
