@@ -108,17 +108,18 @@ async def process_playlist(request: PlaylistRequest):
         processed_count = 0
         
         for video in videos:
-            print(f"Processing video: {video["title"]}")
+            print(f'Skipping {video["title"]} - No chapters generated')
+
             
             # Generate chapters using LLM
             chapters = llm.generate_chapters(video["transcript"], video["duration"])
             
             if not chapters:
-                print(f"Skipping {video["title"]} - No chapters generated")
+                print(f'Skipping {video["title"]} - No chapters generated')
                 continue
                 
             # Create embeddings for chapters (Title + Description)
-            texts_to_embed = [f"{c["title"]}: {c["description"]}" for c in chapters]
+            texts_to_embed = [f'{c["title"]}: {c["description"]}' for c in chapters]
             embeddings = emb_service.create_embeddings(texts_to_embed)
             
             # Store in Neo4j

@@ -5,6 +5,8 @@ import yt_dlp
 import json
 from typing import List, Dict, Optional
 import re
+import whisper
+import tempfile
 import os
 import glob
 import uuid
@@ -162,6 +164,8 @@ class YouTubeScraper:
                     print(f"  ⚠ No subtitle file downloaded for this video")
                 
                 if not transcript_segments:
+                    # Try Whisper fallback
+                    transcript_segments = self._generate_whisper_transcript(video_url, duration)
                     print(f"  ✗ No transcript segments extracted for this video")
                 
                 return {
@@ -265,3 +269,69 @@ class YouTubeScraper:
         print(f"\nSuccessfully processed {len(videos_with_transcripts)}/{len(videos)} videos with transcripts")
         return videos_with_transcripts
 
+
+    def _generate_whisper_transcript(self, video_url: str, duration: float) -> List[Dict]:
+        """
+        Generate transcript using Whisper for videos without subtitles
+        """
+        print(f"  🔄 Generating transcript with Whisper (this may take a while)...")
+
+        # Download audio
+        temp_id = str(uuid.uuid4())
+        audio_template = f"temp_audio_{temp_id}_%(id)s.%(ext)s"
+
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': audio_template,
+            'quiet': True,
+            'no_warnings': True,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
+
+        audio_file = None
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(video_url, download=True)
+                video_id = info.get('id')
+
+                # Find the downloaded audio file
+                search_pattern = f"temp_audio_{temp_id}_{video_id}.mp3"
+                found_files = glob.glob(search_pattern)
+
+                if not found_files:
+                    print(f"  ✗ Failed to download audio")
+                    return []
+
+                audio_file = found_files[0]
+                print(f"  ✓ Downloaded audio: {audio_file}")
+
+                # Load Whisper model (tiny)
+                model = whisper.load_model("tiny")
+                result = model.transcribe(audio_file, language='en')
+
+                # Convert to the same format as VTT segments
+                segments = []
+                for segment in result['segments']:
+                    segments.append({
+                        'start': segment['start'],
+                        'end': segment['end'],
+                        'text': segment['text'].strip()
+                    })
+
+                print(f"  ✓ Generated {len(segments)} transcript segments with Whisper")
+                return segments
+
+        except Exception as e:
+            print(f"  ✗ Whisper transcription failed: {e}")
+            return []
+        finally:
+            # Clean up audio file
+            if audio_file and os.path.exists(audio_file):
+                try:
+                    os.remove(audio_file)
+                except:
+                    pass
