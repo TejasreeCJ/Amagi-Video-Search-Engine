@@ -3,6 +3,8 @@ FastAPI backend for video search engine
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
@@ -14,6 +16,35 @@ from backend.llm_service import LLMService
 from backend.neo4j_service import Neo4jService
 
 app = FastAPI(title="NPTEL Video Search Engine")
+
+# Serve static files from frontend directory
+frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+if os.path.exists(frontend_path):
+    # Mount static files (CSS, JS) at /static
+    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+    
+    @app.get("/")
+    async def serve_frontend():
+        """Serve the frontend index.html"""
+        index_path = os.path.join(frontend_path, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        return {"message": "Frontend files not found"}
+    
+    # Serve CSS and JS files
+    @app.get("/styles.css")
+    async def serve_css():
+        css_path = os.path.join(frontend_path, "styles.css")
+        if os.path.exists(css_path):
+            return FileResponse(css_path, media_type="text/css")
+        raise HTTPException(status_code=404, detail="CSS file not found")
+    
+    @app.get("/app.js")
+    async def serve_js():
+        js_path = os.path.join(frontend_path, "app.js")
+        if os.path.exists(js_path):
+            return FileResponse(js_path, media_type="application/javascript")
+        raise HTTPException(status_code=404, detail="JS file not found")
 
 # CORS middleware
 app.add_middleware(
@@ -76,8 +107,8 @@ class SearchResponse(BaseModel):
     query: str
 
 
-@app.get("/")
-async def root():
+@app.get("/api")
+async def api_root():
     return {"message": "NPTEL Video Search Engine API (Neo4j + LLM Edition)"}
 
 

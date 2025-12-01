@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000';
+// Use relative URL for API calls (works with both local and containerized deployments)
+// If running locally, this will use the same origin; if containerized, it will use the container's URL
+const API_BASE_URL = window.location.origin;
 
 let currentVideoData = null;
 let youtubePlayer = null;

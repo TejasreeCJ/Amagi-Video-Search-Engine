@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: amagi-video-search-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Neo4j AuraDB credentials (set via .env file or environment)
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      
+      # Gemini API Key
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      
+      # Pinecone (optional, if still used)
+      - PINECONE_API_KEY=${PINECONE_API_KEY:-}
+      - PINECONE_ENVIRONMENT=${PINECONE_ENVIRONMENT:-us-east-1-aws}
+      - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME:-nptel-video-search}
+      
+      # YouTube API (optional)
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
+    env_file:
+      - .env
+    volumes:
+      # Optional: Mount for persistent data or logs
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
