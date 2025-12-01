@@ -193,12 +193,11 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
 ![alt text](amagi_images/image7.jpeg)
 ![alt text](amagi_images/image6.jpeg)
 
-![alt text](amagi_images/image1.jpeg)
-
 ![alt text](amagi_images/image11.jpeg)
 
 ![alt text](amagi_images/image13.jpeg)
 
+![alt text](amagi_images/image1.jpeg)
 
 ![alt text](amagi_images/image4.jpeg)
 ![alt text](amagi_images/image5.jpeg)
