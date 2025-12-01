@@ -56,6 +56,27 @@ if os.path.exists(frontend_path):
             return FileResponse(js_path, media_type="application/javascript")
         raise HTTPException(status_code=404, detail="JS file not found")
 
+    @app.get("/knowledge-graph.html")
+    async def serve_knowledge_graph():
+        kg_path = os.path.join(frontend_path, "knowledge-graph.html")
+        if os.path.exists(kg_path):
+            return FileResponse(kg_path, media_type="text/html")
+        raise HTTPException(status_code=404, detail="Knowledge graph page not found")
+
+    @app.get("/knowledge-graph.js")
+    async def serve_knowledge_graph_js():
+        kg_js_path = os.path.join(frontend_path, "knowledge-graph.js")
+        if os.path.exists(kg_js_path):
+            return FileResponse(kg_js_path, media_type="application/javascript")
+        raise HTTPException(status_code=404, detail="Knowledge graph JS not found")
+
+    @app.get("/knowledge-graph.css")
+    async def serve_knowledge_graph_css():
+        kg_css_path = os.path.join(frontend_path, "knowledge-graph.css")
+        if os.path.exists(kg_css_path):
+            return FileResponse(kg_css_path, media_type="text/css")
+        raise HTTPException(status_code=404, detail="Knowledge graph CSS not found")
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
