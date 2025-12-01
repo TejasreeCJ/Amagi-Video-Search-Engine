@@ -1,34 +1,45 @@
-# NPTEL Video Search Engine
+# Amagi Video Search Engine (Neo4j + Knowledge Graph Edition)
 
-A web application to search for specific video clips in NPTEL (or any YouTube) playlists using speech-to-text data and vector embeddings with RAG (Retrieval Augmented Generation).
+A comprehensive web application to search for specific video clips in YouTube playlists using speech-to-text data, vector embeddings, and interactive knowledge graphs. Features hybrid search combining semantic similarity with keyword matching, powered by Neo4j graph database and Google Gemini AI.
 
 ## Features
 
-- 🔍 **Intelligent Search**: Search for specific topics, concepts, or questions in video transcripts
+- 🔍 **Hybrid Search**: Combines vector similarity (80%) and keyword search (20%) for intelligent topic matching
 - 📹 **Clip Retrieval**: Get precise video clips (not just full videos) matching your query
-- 🎯 **RAG-based**: Uses Retrieval Augmented Generation for better context understanding
+- 🧠 **Knowledge Graph**: Interactive visualization of chapter relationships and learning paths
+- 🎯 **LLM Chapter Generation**: Uses Google Gemini to automatically create meaningful chapters from transcripts
 - 📊 **Vector Embeddings**: Uses sentence-transformers for semantic search
-- 💾 **Pinecone Storage**: Stores and retrieves vector embeddings efficiently
-- 🎬 **Video Player**: Watch videos with clip timeline visualization
+- 🕸️ **Neo4j Graph Database**: Stores video-chapter relationships and enables graph-based recommendations
+- 🎬 **Video Player**: Watch videos with clip timeline visualization and jump-to-clip functionality
 - ⏱️ **Timestamp Navigation**: Jump directly to relevant clips in videos
+- 🤖 **Whisper Fallback**: Automatic transcription for videos without subtitles
+- 🔗 **Learning Paths**: Graph-based discovery of prerequisite topics and optimal learning sequences
+- 🐳 **Docker Support**: Containerized deployment with docker-compose
 
 ## Architecture
 
 ### Backend
-- **FastAPI**: RESTful API for video search
+- **FastAPI**: RESTful API for video search and knowledge graph operations
 - **yt-dlp**: Extracts video information and transcripts from YouTube
-- **sentence-transformers**: Creates vector embeddings from transcript text
-- **Pinecone**: Vector database for storing and searching embeddings
-- **RAG Service**: Retrieval Augmented Generation for query processing
+- **Google Gemini**: Generates intelligent chapters from raw transcripts using sliding window analysis
+- **sentence-transformers**: Creates vector embeddings from chapter text
+- **Neo4j**: Graph database for storing video-chapter relationships and vector search
+- **Knowledge Graph Service**: Analyzes chapter relationships and builds interactive graphs
+- **Whisper**: Fallback transcription for videos without subtitles
 
 ### Frontend
 - **HTML/CSS/JavaScript**: Modern, responsive web interface
 - **YouTube IFrame API**: Embedded video player with clip navigation
-- **Search Interface**: Clean, intuitive search experience
+- **Knowledge Graph Visualization**: Interactive D3.js-based graph with multiple layouts
+- **Search Interface**: Clean, intuitive search experience with result cards
+- **Learning Path Discovery**: Visual pathways through prerequisite topics
 
 ## Quick Start
 
-For a detailed setup guide, see [QUICKSTART.md](QUICKSTART.md).
+For detailed setup guides, see:
+- [QUICKSTART.md](QUICKSTART.md) - Basic setup
+- [DOCKER_QUICKSTART.md](DOCKER_QUICKSTART.md) - Docker deployment
+- [neo4j_readme.md](neo4j_readme.md) - Neo4j-specific setup
 
 ### Quick Setup
 
@@ -37,23 +48,42 @@ For a detailed setup guide, see [QUICKSTART.md](QUICKSTART.md).
 pip install -r requirements.txt
 ```
 
-2. **Configure environment**:
+2. **Set up Neo4j database**:
+   - Download Neo4j Desktop from https://neo4j.com/download/
+   - Create a new project and database
+   - Note the connection details (default: bolt://localhost:7687)
+
+3. **Configure environment**:
 ```bash
 python setup_env.py
-# Edit .env file with your Pinecone API key
+# Edit .env file with your API keys:
+# - GEMINI_API_KEY (from https://makersuite.google.com/app/apikey)
+# - NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
 ```
 
-3. **Test setup**:
+4. **Test setup**:
 ```bash
+python test_neo4j.py
 python test_setup.py
 ```
 
-4. **Run the server**:
+5. **Run the server**:
 ```bash
 python run_server.py
 ```
 
-5. **Open frontend**: Open `frontend/index.html` in your browser
+6. **Open frontend**: Open `frontend/index.html` in your browser
+
+### Docker Setup (Alternative)
+
+```bash
+# Build and run with docker-compose
+docker-compose up --build
+
+# Or run individual containers
+docker build -t amagi-video-search .
+docker run -p 8000:8000 amagi-video-search
+```
 
 ## Development Scripts (Windows)
 
@@ -85,7 +115,7 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
 1. Open the web application
 2. Enter a YouTube playlist URL (e.g., NPTEL lecture series)
 3. Click "Process Playlist"
-4. Wait for the processing to complete (this may take several minutes depending on playlist size)
+4. Wait for the processing to complete (this may take several minutes depending on playlist size and API rate limits)
 
 ### 2. Search for Video Clips
 
@@ -94,12 +124,23 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
 3. Browse through the results showing relevant video clips
 4. Click on any result to watch the video with the clip highlighted
 
-### 3. Watch and Navigate
+### 3. Explore Knowledge Graph
+
+1. Navigate to the **🧠 Knowledge Graph** page
+2. Click **"🔨 Build Knowledge Graph"** to analyze chapter relationships
+3. Explore the interactive graph:
+   - Click nodes to view chapter details
+   - Switch between Force Directed, Hierarchical, and Circular layouts
+   - Filter by specific videos
+   - Discover learning paths by clicking "🎯 Show Learning Path"
+
+### 4. Watch and Navigate
 
 1. Click on a search result to open the video player
-2. The clip timeline shows where the relevant content is
+2. The clip timeline shows where the relevant content is located
 3. Click "Jump to Clip" to navigate directly to the relevant section
 4. The transcript for the clip is displayed below the video
+5. View related videos based on content similarity
 
 ## How It Works
 
@@ -131,6 +172,21 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
 
 ## Configuration
 
+### Environment Variables (.env file)
+
+```bash
+# Google Gemini API Key
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Neo4j Configuration
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+
+# Optional: Custom embedding model
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+```
+
 ### Embedding Model
 The default model is `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions). You can change it in `backend/config.py`:
 
@@ -142,12 +198,20 @@ Other good options:
 - `sentence-transformers/all-mpnet-base-v2` (768 dimensions, better quality)
 - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (multilingual)
 
-### Chunk Size
-Adjust chunk size and overlap in `backend/config.py`:
+### Chapter Generation Settings
+Adjust window size and overlap in `backend/llm_service.py`:
 
 ```python
-CHUNK_SIZE = 500  # characters
-CHUNK_OVERLAP = 100  # characters
+window_size_seconds = 300  # 5 minutes
+overlap_seconds = 60       # 1 minute
+```
+
+### Knowledge Graph Settings
+Configure graph building parameters in `backend/knowledge_graph_service.py`:
+
+```python
+similarity_threshold = 0.7  # Minimum similarity for relationships
+max_connections = 5         # Maximum connections per chapter
 ```
 
 ## Project Structure
@@ -173,8 +237,10 @@ Amagi/
 
 ## API Endpoints
 
-### `POST /api/process-playlist`
-Process a YouTube playlist and store embeddings in Pinecone.
+### Video Processing & Search
+
+#### `POST /api/process-playlist`
+Process a YouTube playlist and store chapters in Neo4j.
 
 **Request:**
 ```json
@@ -187,13 +253,13 @@ Process a YouTube playlist and store embeddings in Pinecone.
 ```json
 {
   "message": "Playlist processed successfully",
-  "videos_processed": 10,
-  "chunks_created": 250
+  "videos_processed": 5,
+  "total_videos": 10
 }
 ```
 
-### `POST /api/search`
-Search for video clips matching a query.
+#### `POST /api/search`
+Search for video chapters matching a query using hybrid search.
 
 **Request:**
 ```json
@@ -206,41 +272,134 @@ Search for video clips matching a query.
 **Response:**
 ```json
 {
-  "clips": [
+  "results": [
     {
-      "video_id": "abc123",
       "video_title": "Physics Lecture 1",
       "video_url": "https://www.youtube.com/watch?v=abc123",
-      "clip_start": 125.5,
-      "clip_end": 180.2,
-      "transcript": "The law of conservation of energy states that...",
-      "relevance_score": 0.95
+      "chapter_title": "Conservation Laws",
+      "chapter_description": "Discussion of conservation of energy principle...",
+      "start": 125.5,
+      "end": 180.2,
+      "score": 0.95
     }
   ],
   "query": "law of conservation of energy"
 }
 ```
 
+### Knowledge Graph
+
+#### `POST /api/knowledge-graph/build`
+Build the knowledge graph by analyzing chapter relationships.
+
+**Parameters:**
+- `similarity_threshold` (float, default: 0.7): Minimum similarity for relationships
+- `max_connections` (int, default: 5): Maximum connections per chapter
+
+**Response:**
+```json
+{
+  "message": "Knowledge graph built successfully",
+  "nodes_created": 45,
+  "relationships_created": 120
+}
+```
+
+#### `GET /api/knowledge-graph`
+Get graph data for visualization.
+
+**Parameters:**
+- `video_id` (optional): Filter by specific video
+- `limit` (int, default: 100): Maximum nodes to return
+
+**Response:**
+```json
+{
+  "nodes": [
+    {
+      "id": "chapter_1",
+      "label": "Newton's Laws",
+      "title": "Newton's First Law",
+      "description": "Inertia and force...",
+      "video_title": "Physics Basics",
+      "start": 0,
+      "end": 300
+    }
+  ],
+  "relationships": [
+    {
+      "source": "chapter_1",
+      "target": "chapter_2",
+      "type": "NEXT_TOPIC",
+      "strength": 1.0
+    }
+  ]
+}
+```
+
+#### `GET /api/knowledge-graph/learning-path/{target_chapter_id}`
+Get the optimal learning path to a target chapter.
+
+**Response:**
+```json
+{
+  "learning_path": [
+    {
+      "chapter_id": "prereq_1",
+      "title": "Basic Concepts",
+      "reason": "Prerequisite for understanding Newton's Laws"
+    },
+    {
+      "chapter_id": "target_chapter",
+      "title": "Newton's Laws",
+      "reason": "Target learning objective"
+    }
+  ]
+}
+```
+
 ## Troubleshooting
 
-### Issue: "PINECONE_API_KEY not set"
-- Make sure you've created a `.env` file with your Pinecone API key
+### Issue: "GEMINI_API_KEY not set"
+- Make sure you've created a `.env` file with your Gemini API key from https://makersuite.google.com/app/apikey
 - Check that the key is correct and has the right permissions
+- Free tier has rate limits (~15 requests per minute)
+
+### Issue: "Neo4j connection failed"
+- Ensure Neo4j is running and accessible
+- Check NEO4J_URI, NEO4J_USER, and NEO4J_PASSWORD in .env
+- For Neo4j Desktop, verify the database is started
+- For AuraDB, ensure the instance is active
 
 ### Issue: "No transcripts found"
 - Some videos may not have automatic captions
-- Try a different playlist or video that has captions enabled
+- The system falls back to Whisper transcription (slower)
 - Check if the video has English subtitles available
 
 ### Issue: "Search returns no results"
 - Make sure you've processed a playlist first
-- Check that the Pinecone index has vectors stored
-- Try a different search query
+- Check that Neo4j has chapters stored
+- Verify the vector index was created successfully
+
+### Issue: "Knowledge graph not building"
+- Ensure at least 2+ videos have been processed
+- Check Neo4j connection and database contents
+- Try lowering similarity_threshold if too few relationships are created
+
+### Issue: "LLM chapter generation failed"
+- Check your Gemini API key and quota
+- Rate limiting may cause temporary failures
+- The system continues with raw transcript chunks as fallback
 
 ### Issue: "YouTube player not loading"
 - Check your internet connection
 - Make sure the YouTube IFrame API is accessible
-- Check browser console for errors
+- Try a different browser or clear cache
+
+### Issue: "Docker build fails"
+- Ensure Docker and docker-compose are installed
+- Check that all required ports are available
+- Verify .env file is properly configured
 
 ## Future Enhancements
 
@@ -259,9 +418,10 @@ This project is open source and available under the MIT License.
 
 ## Acknowledgments
 
-- NPTEL for educational content
-- YouTube for video hosting
-- Pinecone for vector database
+- Google for Gemini AI and YouTube
+- Neo4j for graph database technology
 - sentence-transformers for embeddings
 - yt-dlp for YouTube data extraction
+- OpenAI for Whisper transcription
+- D3.js for graph visualization
 
