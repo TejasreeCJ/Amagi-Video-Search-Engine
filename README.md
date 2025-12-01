@@ -188,25 +188,25 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
 - Timeline shows chapter locations and navigation
 - Jump-to-chapter functionality navigates to precise timestamps
 - Knowledge graph provides learning context and pathways
+![alt text](amagi_images/image3.jpeg)
+![alt text](amagi_images/image2.jpeg)
+![alt text](amagi_images/image7.jpeg)
+![alt text](amagi_images/image6.jpeg)
 
 ![alt text](amagi_images/image1.jpeg)
 
-![alt text](amagi_images/image2.jpeg)
+![alt text](amagi_images/image11.jpeg)
 
-![alt text](amagi_images/image3.jpeg)
+![alt text](amagi_images/image13.jpeg)
+
 
 ![alt text](amagi_images/image4.jpeg)
 ![alt text](amagi_images/image5.jpeg)
-![alt text](amagi_images/image6.jpeg)
-![alt text](amagi_images/image7.jpeg)
+
 ![alt text](amagi_images/image9.jpeg)
 ![alt text](amagi_images/image10.jpeg)
 
-![alt text](amagi_images/image11.jpeg)
-
 ![alt text](amagi_images/image12.jpeg)
-
-![alt text](amagi_images/image13.jpeg)
 
 ## Configuration
 
