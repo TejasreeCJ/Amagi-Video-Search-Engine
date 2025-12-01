@@ -34,7 +34,7 @@ A comprehensive web application to search for specific video clips in YouTube pl
 - **Search Interface**: Clean, intuitive search experience with result cards
 - **Learning Path Discovery**: Visual pathways through prerequisite topics
 
-![alt text](amagi_images/image8.png)
+![alt text](amagi_images/image8.jpeg)
 
 
 ## Quick Start
@@ -189,24 +189,24 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
 - Jump-to-chapter functionality navigates to precise timestamps
 - Knowledge graph provides learning context and pathways
 
-![alt text](amagi_images/image1.png)
+![alt text](amagi_images/image1.jpeg)
 
-![alt text](amagi_images/image2.png)
+![alt text](amagi_images/image2.jpeg)
 
-![alt text](amagi_images/image3.png)
+![alt text](amagi_images/image3.jpeg)
 
-![alt text](amagi_images/image4.png)
-![alt text](amagi_images/image5.png)
-![alt text](amagi_images/image6.png)
-![alt text](amagi_images/image7.png)
-![alt text](amagi_images/image9.png)
-![alt text](amagi_images/image10.png)
+![alt text](amagi_images/image4.jpeg)
+![alt text](amagi_images/image5.jpeg)
+![alt text](amagi_images/image6.jpeg)
+![alt text](amagi_images/image7.jpeg)
+![alt text](amagi_images/image9.jpeg)
+![alt text](amagi_images/image10.jpeg)
 
-![alt text](amagi_images/image11.png)
+![alt text](amagi_images/image11.jpeg)
 
-![alt text](amagi_images/image12.png)
+![alt text](amagi_images/image12.jpeg)
 
-![alt text](amagi_images/image13.png)
+![alt text](amagi_images/image13.jpeg)
 
 ## Configuration
 
