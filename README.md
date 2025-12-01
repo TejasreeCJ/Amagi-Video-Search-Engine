@@ -102,7 +102,8 @@ To run them from PowerShell:
 ### Prerequisites
 
 - Python 3.8+
-- Pinecone account (free tier available at https://www.pinecone.io/)
+- Neo4j database (Desktop or AuraDB)
+- Google Gemini API key (free tier available)
 
 ### Installation
 
@@ -147,28 +148,43 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed installation instructions.
 ### 1. Transcript Extraction
 - Uses `yt-dlp` to extract automatic captions from YouTube videos
 - Parses VTT format to get text with precise timestamps
+- Falls back to Whisper AI transcription for videos without subtitles
 - Creates segments for each transcript chunk
 
-### 2. Embedding Generation
+### 2. LLM Chapter Generation
+- Uses Google Gemini to analyze transcript segments
+- Applies sliding window approach (5-minute windows with 1-minute overlap)
+- Generates meaningful chapter titles and descriptions
+- Creates structured content from raw transcript text
+
+### 3. Embedding Generation
 - Uses `sentence-transformers/all-MiniLM-L6-v2` model for embeddings
-- Creates overlapping chunks for better context preservation
-- Each chunk includes: text, start time, end time, video metadata
+- Creates vector representations of chapter content
+- Each embedding includes chapter metadata and relationships
 
-### 3. Vector Storage
-- Stores embeddings in Pinecone vector database
-- Each vector includes metadata: video ID, title, URL, timestamps, transcript text
-- Uses cosine similarity for semantic search
+### 4. Graph Database Storage
+- Stores videos, chapters, and relationships in Neo4j
+- Creates vector index for semantic search
+- Builds fulltext index for keyword search
+- Establishes chapter-to-chapter relationships
 
-### 4. RAG-based Search
-- User query is converted to an embedding
-- Searches Pinecone for similar vectors (semantic search)
-- Returns top-k most relevant clips with metadata
+### 5. Hybrid Search
+- Combines vector similarity (80%) and keyword search (20%)
+- Queries both vector and fulltext indexes in Neo4j
+- Returns top-k most relevant chapters with metadata
 - Results include relevance scores and full context
 
-### 5. Clip Display
+### 6. Knowledge Graph Analysis
+- Analyzes chapter relationships and similarities
+- Creates multiple relationship types (NEXT_TOPIC, SIMILAR_TO, etc.)
+- Builds interactive graph for learning path discovery
+- Enables prerequisite topic identification
+
+### 7. Clip Display
 - Frontend displays video player with YouTube IFrame API
-- Timeline slider shows clip location
-- Jump-to-clip functionality navigates to precise timestamps
+- Timeline shows chapter locations and navigation
+- Jump-to-chapter functionality navigates to precise timestamps
+- Knowledge graph provides learning context and pathways
 
 ## Configuration
 
@@ -217,22 +233,38 @@ max_connections = 5         # Maximum connections per chapter
 ## Project Structure
 
 ```
-Amagi/
+Amagi-Video-Search-Engine/
 ├── backend/
 │   ├── __init__.py
-│   ├── main.py                 # FastAPI application
-│   ├── config.py               # Configuration
-│   ├── youtube_scraper.py      # YouTube data extraction
+│   ├── main.py                 # FastAPI application with Neo4j integration
+│   ├── config.py               # Configuration settings
+│   ├── youtube_scraper.py      # YouTube data extraction and transcription
 │   ├── embedding_service.py    # Vector embedding generation
-│   ├── pinecone_service.py     # Pinecone integration
-│   └── rag_service.py          # RAG search service
+│   ├── neo4j_service.py        # Neo4j graph database operations
+│   ├── llm_service.py          # Google Gemini chapter generation
+│   ├── knowledge_graph_service.py # Graph analysis and relationship building
+│   └── rag_service.py          # Legacy RAG service (deprecated)
 ├── frontend/
-│   ├── index.html              # Main HTML page
-│   ├── styles.css              # Styling
-│   └── app.js                  # Frontend logic
+│   ├── index.html              # Main search interface
+│   ├── knowledge-graph.html    # Knowledge graph visualization
+│   ├── styles.css              # Main styling
+│   ├── knowledge-graph.css     # Graph-specific styles
+│   ├── app.js                  # Main application logic
+│   └── knowledge-graph.js      # Graph visualization logic
+├── docker/
+│   ├── Dockerfile              # Container configuration
+│   ├── docker-compose.yml      # Multi-container setup
+│   └── neo4j/                  # Neo4j-specific Docker configs
 ├── requirements.txt            # Python dependencies
-├── .env.example               # Environment variables template
-└── README.md                  # This file
+├── setup_env.py               # Environment setup script
+├── test_neo4j.py              # Neo4j connection testing
+├── run_server.py             # Development server launcher
+├── .env.example              # Environment variables template
+├── QUICKSTART.md              # Basic setup guide
+├── DOCKER_QUICKSTART.md       # Docker deployment guide
+├── neo4j_readme.md           # Neo4j-specific documentation
+├── KNOWLEDGE_GRAPH_GUIDE.md  # Knowledge graph user guide
+└── README.md                 # This file
 ```
 
 ## API Endpoints
